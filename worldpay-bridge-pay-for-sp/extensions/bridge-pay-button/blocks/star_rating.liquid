@@ -1,9 +1,9 @@
 {% comment %} 
-  自定义截流结账按钮逻辑 
+  Version 35.0 - 支持全局注入、自定义隐藏开关、产品页自动加车
 {% endcomment %}
 
-<div class="bridge-pay-container" id="bridge-pay-root" style="margin: 20px 0; display: block;">
-  <button id="bridge-checkout-btn" class="bridge-primary-btn" style="
+<div class="bridge-pay-container" id="bridge-pay-root" style="margin: 20px 0;">
+  <button id="bridge-checkout-btn" style="
     background-color: {{ block.settings.btn_color }}; 
     color: #fff; width: 100%; padding: 15px; border: none; border-radius: 4px; 
     font-weight: bold; cursor: pointer; font-size: 16px;
@@ -17,45 +17,37 @@
   const CONFIG = {
     text: '{{ block.settings.btn_text }}',
     color: '{{ block.settings.btn_color }}',
-    hideNative: {{ block.settings.hide_native | default: false }} 
+    hideNative: {{ block.settings.hide_native | default: false }} // 读取配置开关
   };
 
-  // 1. 核心跳转与加车逻辑 (完整保留 Version 33.0 的每一个细节)
   async function handleAction(e) {
     e.preventDefault();
     const btn = e.target;
-    const originalText = btn.innerText;
     btn.innerText = 'Processing...';
     btn.disabled = true;
-
     try {
-      // 尝试抓取产品页的变体 ID (用于 Buy It Now 逻辑)
+      // 产品页加车逻辑
       const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
                      || document.querySelector('[name="id"]')?.value;
-      const quantity = document.querySelector('[name="quantity"]')?.value || 1;
-
       if (variantId && !isNaN(variantId)) {
         await fetch(window.Shopify.routes.root + 'cart/add.js', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: parseInt(quantity) }] })
+          body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] })
         });
-        await new Promise(r => setTimeout(r, 400)); // 延迟确保购物车 Session 更新
+        await new Promise(r => setTimeout(r, 400));
       }
-      // 跳转到代理页面
       window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     } catch (err) {
-      console.error('Checkout error:', err);
       window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     }
   }
 
-  // 2. 绑定静态按钮 (用于产品页和购物车手动添加的块)
   document.getElementById('bridge-checkout-btn')?.addEventListener('click', handleAction);
 
-  // 3. 侧边栏自动注入逻辑 (支持全站，无论在哪个页面)
-  function injectToDrawer() {
-    const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout, [href*="/checkout"]');
+  // 侧边栏/全站自动注入逻辑
+  function injectButton() {
+    const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
     
     if (nativeBtn && !document.getElementById('injected-bridge-btn')) {
       const bridgeBtn = document.createElement('button');
@@ -66,22 +58,22 @@
         background-color: ${CONFIG.color};
         color: #fff; width: 100% !important; padding: 15px; border: none; border-radius: 4px;
         font-weight: bold; cursor: pointer; font-size: 16px; margin-bottom: 10px;
-        display: block !important; flex: 0 0 100%;
+        display: block !important;
       `;
       bridgeBtn.onclick = handleAction;
-
-      // 插入在原生按钮上方
+      
       nativeBtn.parentNode.insertBefore(bridgeBtn, nativeBtn);
 
-      // 如果开启了隐藏原生按钮
+      // 【核心优化】：只有在配置开启时才隐藏原生按钮
       if (CONFIG.hideNative) {
-        nativeBtn.style.display = 'none';
+        nativeBtn.style.setProperty('display', 'none', 'important');
+      } else {
+        nativeBtn.style.display = ''; // 恢复显示
       }
     }
   }
 
-  // 开启全站监听 (确保目录页点击购物车也能触发)
-  const observer = new MutationObserver(injectToDrawer);
+  const observer = new MutationObserver(injectButton);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
