@@ -10,12 +10,18 @@
     
     /* 左侧表单区域 */
     .form-section { flex: 1.2; padding: 40px; background: #fff; min-width: 350px; }
-    .form-section h2 { font-size: 20px; margin-bottom: 20px; }
+    .form-section h2 { font-size: 18px; margin: 30px 0 15px 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .form-section h2:first-child { margin-top: 0; }
     .input-group { display: flex; gap: 12px; margin-bottom: 12px; }
     .input-box { flex: 1; margin-bottom: 12px; }
     label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
     input, select { width: 100%; padding: 12px; border: 1px solid #d9d9d9; border-radius: 5px; box-sizing: border-box; font-size: 14px; transition: border-color 0.2s; }
     input:focus { border-color: #000; outline: none; }
+
+    /* 运费选择器样式 */
+    .shipping-method-item { display: flex; align-items: center; padding: 12px; border: 1px solid #d9d9d9; border-radius: 5px; margin-bottom: 8px; cursor: pointer; }
+    .shipping-method-item:hover { background: #f9f9f9; }
+    .shipping-method-item input { width: auto; margin-right: 15px; }
 
     /* 右侧订单明细区域 */
     .summary-section { flex: 0.8; padding: 40px; background: #fafafa; border-left: 1px solid #e1e1e1; min-width: 300px; }
@@ -23,41 +29,41 @@
     .product-item { display: flex; align-items: center; margin-bottom: 15px; }
     .product-img { width: 64px; height: 64px; background: #fff; border: 1px solid #e1e1e1; border-radius: 8px; overflow: hidden; position: relative; }
     .product-img img { width: 100%; height: 100%; object-fit: cover; }
-    .product-qty { position: absolute; top: -8px; right: -8px; background: #666; color: #fff; font-size: 12px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-    .product-info { flex: 1; padding: 0 15px; font-size: 14px; font-weight: 500; }
+    .product-qty { position: absolute; top: -8px; right: -8px; background: #666; color: #fff; font-size: 11px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .product-info { flex: 1; padding: 0 15px; font-size: 14px; }
     .product-price { font-size: 14px; font-weight: bold; }
     
-    .total-line { display: flex; justify-content: space-between; margin-top: 15px; font-size: 15px; }
-    .final-total { font-size: 22px; font-weight: bold; color: #000; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
+    .total-line { display: flex; justify-content: space-between; margin-top: 12px; font-size: 14px; color: #555; }
+    .final-total { font-size: 20px; font-weight: bold; color: #000; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }
 
-    button#submit-btn { width: 100%; padding: 18px; background: #000; color: #fff; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 25px; }
+    button#submit-btn { width: 100%; padding: 18px; background: #000; color: #fff; border: none; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 30px; }
     button#submit-btn:hover { background: #333; }
-    button#submit-btn:disabled { background: #999; }
+    button#submit-btn:disabled { background: #999; cursor: not-allowed; }
 
     @media (max-width: 768px) {
       .main-container { flex-direction: column-reverse; }
-      .summary-section { border-left: none; border-bottom: 1px solid #e1e1e1; }
+      .summary-section { border-left: none; border-bottom: 1px solid #e1e1e1; padding: 20px; }
+      .form-section { padding: 20px; }
     }
   </style>
 </head>
 <body>
 
 <div class="main-container">
-  <!-- 左侧表单 -->
+  <!-- 左侧：表单 -->
   <div class="form-section">
-    <h2>Billing & Shipping</h2>
     <form id="payment-form">
+      <h2>Contact</h2>
       <div class="input-box">
         <label>Email Address</label>
         <input type="email" id="email" required placeholder="email@example.com">
       </div>
-      
-      <!-- 新增：电话号码输入框 -->
       <div class="input-box">
         <label>Phone Number</label>
         <input type="tel" id="phone" required placeholder="Phone number">
       </div>
 
+      <h2>Shipping Address</h2>
       <div class="input-group">
         <div class="input-box">
           <label>First Name</label>
@@ -78,6 +84,7 @@
           <option value="MY">Malaysia</option>
           <option value="TW">Taiwan</option>
           <option value="HK">Hong Kong</option>
+          <option value="SG">Singapore</option>
         </select>
       </div>
 
@@ -92,7 +99,7 @@
           <input type="text" id="city" required>
         </div>
         <div class="input-box">
-          <label>State / Province</label>
+          <label>State / Province (Code, e.g. CA, NY, JPN-TYO)</label>
           <input type="text" id="state" required>
         </div>
         <div class="input-box">
@@ -101,7 +108,15 @@
         </div>
       </div>
 
-      <h2 style="margin-top:40px;">Payment Method</h2>
+      <!-- 动态运费显示区域 -->
+      <div id="shipping-method-area" style="display:none;">
+        <h2>Shipping Method</h2>
+        <div id="shipping-rates-list">
+          <!-- 运费单选框由 JS 注入 -->
+        </div>
+      </div>
+
+      <h2>Payment Method</h2>
       <select id="gateway" style="padding:15px; background:#f9f9f9; font-weight:bold;">
         <option value="paypay">PayPay</option>
         <option value="kakaopay">KakaoPay</option>
@@ -113,10 +128,10 @@
     </form>
   </div>
 
-  <!-- 右侧明细 -->
+  <!-- 右侧：订单摘要 -->
   <div class="summary-section">
     <div id="product-list" class="product-list">
-      Loading order items...
+      Loading items...
     </div>
 
     <div class="total-line">
@@ -125,7 +140,7 @@
     </div>
     <div class="total-line">
       <span>Shipping</span>
-      <span style="color:#008060;">Free</span>
+      <span id="shipping-display">Enter address to calculate</span>
     </div>
     <div class="total-line final-total">
       <span>Total</span>
@@ -136,7 +151,10 @@
 
 <script>
   let currentCart = null;
+  let availableShippingRates = [];
+  let selectedShippingRate = null;
 
+  // 1. 初始化：抓取购物车并渲染
   async function loadCartData() {
     try {
       const res = await fetch('/cart.js');
@@ -157,32 +175,93 @@
       });
       
       document.getElementById('product-list').innerHTML = html;
-      const totalStr = (currentCart.total_price / 100).toFixed(2) + " " + currentCart.currency;
-      document.getElementById('subtotal-val').innerText = totalStr;
-      document.getElementById('total-val').innerText = totalStr;
-      
+      updateTotalDisplay();
     } catch (err) {
-      document.getElementById('product-list').innerHTML = "Failed to load cart items.";
+      document.getElementById('product-list').innerHTML = "Cart data error.";
     }
   }
 
+  // 2. 实时计算运费逻辑 (对接 Shopify API)
+  async function fetchShippingRates() {
+    const country = document.getElementById('country').value;
+    const province = document.getElementById('state').value;
+    const zip = document.getElementById('zip').value;
+
+    if (!zip || zip.length < 3) return;
+
+    const listDiv = document.getElementById('shipping-rates-list');
+    document.getElementById('shipping-method-area').style.display = 'block';
+    listDiv.innerHTML = "<small>Calculating rates...</small>";
+
+    try {
+      const res = await fetch(`/cart/shipping_rates.json?shipping_address[zip]=${zip}&shipping_address[country]=${country}&shipping_address[province]=${province}`);
+      const data = await res.json();
+      
+      availableShippingRates = data.shipping_rates;
+      if (availableShippingRates && availableShippingRates.length > 0) {
+        let html = '';
+        availableShippingRates.forEach((rate, index) => {
+          html += `
+            <div class="shipping-method-item" onclick="document.getElementById('r-${index}').click()">
+              <input type="radio" name="s_rate" id="r-${index}" value="${index}" ${index === 0 ? 'checked' : ''}>
+              <div style="flex:1;">${rate.name}</div>
+              <div style="font-weight:bold;">${rate.price}</div>
+            </div>
+          `;
+        });
+        listDiv.innerHTML = html;
+        
+        // 绑定变化事件
+        document.querySelectorAll('input[name="s_rate"]').forEach(el => {
+          el.addEventListener('change', updateTotalDisplay);
+        });
+        
+        updateTotalDisplay();
+      } else {
+        listDiv.innerHTML = "<small>No shipping available for this address.</small>";
+      }
+    } catch (err) {
+      listDiv.innerHTML = "<small>Failed to load shipping.</small>";
+    }
+  }
+
+  // 3. 更新总金额显示
+  function updateTotalDisplay() {
+    if (!currentCart) return;
+    const subtotal = currentCart.total_price / 100;
+    
+    // 获取选中的运费
+    const checked = document.querySelector('input[name="s_rate"]:checked');
+    let shippingPrice = 0;
+    if (checked && availableShippingRates[checked.value]) {
+      selectedShippingRate = availableShippingRates[checked.value];
+      shippingPrice = parseFloat(selectedShippingRate.price);
+      document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
+    }
+
+    const finalTotal = subtotal + shippingPrice;
+    document.getElementById('subtotal-val').innerText = subtotal.toFixed(2) + " " + currentCart.currency;
+    document.getElementById('total-val').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
+    window.finalPayAmount = finalTotal.toFixed(2);
+  }
+
+  // 监听地址变化触发运费计算
+  ['zip', 'state', 'country'].forEach(id => {
+    document.getElementById(id).addEventListener('change', fetchShippingRates);
+  });
+
   loadCartData();
 
+  // 4. 提交支付
   document.getElementById('payment-form').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submit-btn');
-    btn.innerText = "Redirecting to Secure Gateway...";
+    btn.innerText = "Redirecting...";
     btn.disabled = true;
-
-    // 获取前端输入的值
-    const emailVal = document.getElementById('email').value;
-    const phoneVal = document.getElementById('phone').value; // 获取电话
-    const zipVal = document.getElementById('zip').value;
-    const stateVal = document.getElementById('state').value;
 
     const payload = {
       order_id: "SH-" + Date.now(),
-      total_amount: (currentCart.total_price / 100).toFixed(2),
+      total_amount: window.finalPayAmount,
       currency: currentCart.currency,
       gateway_mask: document.getElementById('gateway').value,
       origin_domain: window.location.host,
@@ -194,24 +273,21 @@
         title: item.title,
         price: (item.price / 100).toFixed(2)
       })),
+      // 关键新增：运费行（用于 Shopify 后台还原）
+      shipping_lines: selectedShippingRate ? [{
+        title: selectedShippingRate.name,
+        price: selectedShippingRate.price
+      }] : [],
       billing: {
-        email: emailVal,
-        phone: phoneVal, // 传输电话
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
         first_name: document.getElementById('fname').value,
         last_name: document.getElementById('lname').value,
-        address1: document.getElementById('address').value,
+        address1: document.getElementById('address').value, // 映射到 WC/SP 的第一地址
         city: document.getElementById('city').value,
-        country: document.getElementById('country').value,
-        
-        // 关键修改：字段多重映射
-        // Shopify 常用: province, zip
-        // WordPress/WooCommerce 常用: state, postcode
-        // 我们同时发送这两组 key，确保中台能接收到正确的数据
-        province: stateVal,
-        state: stateVal,
-        
-        zip: zipVal,
-        postcode: zipVal
+        state: document.getElementById('state').value,    // 映射到 WC 的 state
+        postcode: document.getElementById('zip').value,   // 映射到 WC 的 postcode
+        country: document.getElementById('country').value
       }
     };
 
@@ -231,11 +307,10 @@
       if (result.pay_url) {
         window.top.location.href = result.pay_url;
       } else {
-        alert("Error: " + result.message);
+        alert("Gateway error: " + result.message);
         btn.disabled = false;
       }
     } catch (err) {
-      console.error(err);
       alert("System Error. Please try again.");
       btn.disabled = false;
     }
