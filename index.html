@@ -45,11 +45,17 @@
 <div class="main-container">
   <!-- 左侧表单 -->
   <div class="form-section">
-    <h2>Contact & Shipping</h2>
+    <h2>Billing & Shipping</h2>
     <form id="payment-form">
       <div class="input-box">
         <label>Email Address</label>
         <input type="email" id="email" required placeholder="email@example.com">
+      </div>
+      
+      <!-- 新增：电话号码输入框 -->
+      <div class="input-box">
+        <label>Phone Number</label>
+        <input type="tel" id="phone" required placeholder="Phone number">
       </div>
 
       <div class="input-group">
@@ -110,7 +116,6 @@
   <!-- 右侧明细 -->
   <div class="summary-section">
     <div id="product-list" class="product-list">
-      <!-- 产品行将通过 JS 动态注入 -->
       Loading order items...
     </div>
 
@@ -132,7 +137,6 @@
 <script>
   let currentCart = null;
 
-  // 1. 获取购物车数据并渲染明细
   async function loadCartData() {
     try {
       const res = await fetch('/cart.js');
@@ -164,12 +168,17 @@
 
   loadCartData();
 
-  // 2. 提交数据给 Worker
   document.getElementById('payment-form').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submit-btn');
     btn.innerText = "Redirecting to Secure Gateway...";
     btn.disabled = true;
+
+    // 获取前端输入的值
+    const emailVal = document.getElementById('email').value;
+    const phoneVal = document.getElementById('phone').value; // 获取电话
+    const zipVal = document.getElementById('zip').value;
+    const stateVal = document.getElementById('state').value;
 
     const payload = {
       order_id: "SH-" + Date.now(),
@@ -179,7 +188,6 @@
       origin_domain: window.location.host,
       return_url: window.location.origin + "/pages/thank-you",
       hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update",
-      // 核心：传递完整的 Line Items 供后续 Worker 回传订单
       line_items: currentCart.items.map(item => ({
         variant_id: item.variant_id,
         quantity: item.quantity,
@@ -187,14 +195,23 @@
         price: (item.price / 100).toFixed(2)
       })),
       billing: {
-        email: document.getElementById('email').value,
+        email: emailVal,
+        phone: phoneVal, // 传输电话
         first_name: document.getElementById('fname').value,
         last_name: document.getElementById('lname').value,
         address1: document.getElementById('address').value,
         city: document.getElementById('city').value,
-        province: document.getElementById('state').value,
-        zip: document.getElementById('zip').value,
-        country: document.getElementById('country').value
+        country: document.getElementById('country').value,
+        
+        // 关键修改：字段多重映射
+        // Shopify 常用: province, zip
+        // WordPress/WooCommerce 常用: state, postcode
+        // 我们同时发送这两组 key，确保中台能接收到正确的数据
+        province: stateVal,
+        state: stateVal,
+        
+        zip: zipVal,
+        postcode: zipVal
       }
     };
 
@@ -218,6 +235,7 @@
         btn.disabled = false;
       }
     } catch (err) {
+      console.error(err);
       alert("System Error. Please try again.");
       btn.disabled = false;
     }
