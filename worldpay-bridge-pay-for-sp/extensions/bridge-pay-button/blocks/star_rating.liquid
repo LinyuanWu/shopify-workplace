@@ -22,23 +22,19 @@
 document.getElementById('bridge-checkout-btn').addEventListener('click', async function(e) {
   e.preventDefault();
   const btn = this;
-  const originalText = btn.innerText;
   
   btn.innerText = 'Processing...';
   btn.style.opacity = '0.7';
   btn.disabled = true;
 
   try {
-    // 1. 【核心逻辑】判断是否在产品页并抓取当前选中的变体
-    // Shopify 标准主题中，选中的 Variant ID 通常存在名为 "id" 的 input 中
-    // 数量通常存在名为 "quantity" 的 input 中
+    // 1. 抓取当前页面可能存在的变体 ID 和 数量
     const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
                    || document.querySelector('[name="id"]')?.value;
     const quantity = document.querySelector('[name="quantity"]')?.value || 1;
 
-    // 2. 如果找到了变体 ID，说明在产品页，先执行“加入购物车”动作
+    // 2. 如果在产品页，执行异步加车逻辑
     if (variantId && !isNaN(variantId)) {
-      console.log('检测到产品页，正在加车 Variant ID:', variantId);
       await fetch(window.Shopify.routes.root + 'cart/add.js', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,15 +45,17 @@ document.getElementById('bridge-checkout-btn').addEventListener('click', async f
           }]
         })
       });
+      // 稍微等待 300 毫秒，确保 Shopify 服务器完成 Session 更新
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
-    // 3. 跳转到我们的自定义代理结账页
-    // 此时购物车已经包含了刚才加进去的产品
+    // 3. 【核心修复】不再拦截空购物车，直接强制跳转
+    // 如果刚才加车成功了，购物车一定有货；如果本来就有货，更没问题。
     window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     
   } catch (err) {
-    console.error('Checkout Redirect Error:', err);
-    // 即使加车报错，也尝试跳转（可能购物车里已经有东西了）
+    console.error('Checkout Error:', err);
+    // 即使出错也强制尝试跳转
     window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
   }
 });
