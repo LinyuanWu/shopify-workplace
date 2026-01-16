@@ -2,63 +2,75 @@
   自定义截流结账按钮逻辑 
 {% endcomment %}
 
-<div class="bridge-pay-container" style="margin: 20px 0;">
+<div class="bridge-pay-container" id="bridge-pay-root" style="margin: 20px 0;">
   <button id="bridge-checkout-btn" style="
     background-color: {{ block.settings.btn_color }}; 
-    color: #fff; 
-    width: 100%; 
-    padding: 15px; 
-    border: none; 
-    border-radius: 4px; 
-    font-weight: bold; 
-    cursor: pointer;
-    font-size: 16px;
+    color: #fff; width: 100%; padding: 15px; border: none; border-radius: 4px; 
+    font-weight: bold; cursor: pointer; font-size: 16px;
   ">
     {{ block.settings.btn_text }}
   </button>
 </div>
 
 <script>
-document.getElementById('bridge-checkout-btn').addEventListener('click', async function(e) {
-  e.preventDefault();
-  const btn = this;
-  
-  btn.innerText = 'Processing...';
-  btn.style.opacity = '0.7';
-  btn.disabled = true;
+(function() {
+  // 核心变量：直接从 Shopify 后台配置读取
+  const CONFIG = {
+    text: '{{ block.settings.btn_text }}',
+    color: '{{ block.settings.btn_color }}'
+  };
 
-  try {
-    // 1. 抓取当前页面可能存在的变体 ID 和 数量
-    const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
-                   || document.querySelector('[name="id"]')?.value;
-    const quantity = document.querySelector('[name="quantity"]')?.value || 1;
-
-    // 2. 如果在产品页，执行异步加车逻辑
-    if (variantId && !isNaN(variantId)) {
-      await fetch(window.Shopify.routes.root + 'cart/add.js', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [{
-            id: parseInt(variantId),
-            quantity: parseInt(quantity)
-          }]
-        })
-      });
-      // 稍微等待 300 毫秒，确保 Shopify 服务器完成 Session 更新
-      await new Promise(resolve => setTimeout(resolve, 300));
+  async function handleAction(e) {
+    e.preventDefault();
+    const btn = e.target;
+    btn.innerText = 'Processing...';
+    btn.disabled = true;
+    try {
+      const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value;
+      if (variantId && !isNaN(variantId)) {
+        await fetch(window.Shopify.routes.root + 'cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] })
+        });
+        await new Promise(r => setTimeout(r, 400));
+      }
+      window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
+    } catch (err) {
+      window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     }
-
-    // 3. 【核心修复】不再拦截空购物车，直接强制跳转
-    // 如果刚才加车成功了，购物车一定有货；如果本来就有货，更没问题。
-    window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
-    
-  } catch (err) {
-    console.error('Checkout Error:', err);
-    // 即使出错也强制尝试跳转
-    window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
   }
-});
+
+  // 1. 给主页面上的静态按钮绑定事件
+  document.getElementById('bridge-checkout-btn')?.addEventListener('click', handleAction);
+
+  // 2. 侧边栏自动注入函数
+  function injectButton() {
+    // 寻找原生 Checkout 按钮
+    const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button');
+    
+    if (nativeBtn && !document.getElementById('injected-bridge-btn')) {
+      const bridgeBtn = document.createElement('button');
+      bridgeBtn.id = 'injected-bridge-btn';
+      
+      // 使用后台配置的文字和颜色
+      bridgeBtn.innerText = CONFIG.text;
+      bridgeBtn.style.cssText = `
+        background-color: ${CONFIG.color};
+        color: #fff; width: 100%; padding: 15px; border: none; border-radius: 4px;
+        font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px;
+        display: block;
+      `;
+      
+      bridgeBtn.onclick = handleAction;
+      nativeBtn.parentNode.insertBefore(bridgeBtn, nativeBtn.nextSibling);
+    }
+  }
+
+  // 监听 DOM 变化（侧边栏是异步生成的，必须监听）
+  const observer = new MutationObserver(injectButton);
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
 </script>
 
 {% schema %}
