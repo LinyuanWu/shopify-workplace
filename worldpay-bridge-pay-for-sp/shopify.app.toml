@@ -1,12 +1,14 @@
-# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# shopify.app.toml
 
 client_id = "569de84beaea4dfa1eded757259a2385"
 name = "worldpay-bridge-pay-for-sp"
-application_url = "https://example.com"
+application_url = "https://safe-paygate.defitopay.com"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = true
+# 【关键修改 1】：把 true 改为 false！
+# 只有关掉这个，Shopify 才不会在 dev 时强行修改你的域名
+automatically_update_urls_on_dev = false
 
 [webhooks]
 api_version = "2026-04"
@@ -20,13 +22,17 @@ api_version = "2026-04"
   uri = "/webhooks/app/uninstalled"
 
 [access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+# 【关键修改 2】：把 example.com 换成你的正式域名
+redirect_urls = [ 
+  "https://safe-paygate.defitopay.com/auth/callback",
+  "https://safe-paygate.defitopay.com/auth/shopify/callback",
+  "https://safe-paygate.defitopay.com/api/auth/callback"
+]
 
 [app_proxy]
-url = "https://ideal-parakeet-p7qrx9vqww92rwqx-3457.app.github.dev/app/proxy"
+url = "https://safe-paygate.defitopay.com/index.html"
 subpath = "safe-pay"
 prefix = "apps"
