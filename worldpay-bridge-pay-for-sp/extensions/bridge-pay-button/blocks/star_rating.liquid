@@ -22,34 +22,43 @@
 document.getElementById('bridge-checkout-btn').addEventListener('click', async function(e) {
   e.preventDefault();
   const btn = this;
-  btn.innerText = 'Redirecting...';
+  const originalText = btn.innerText;
+  
+  btn.innerText = 'Processing...';
   btn.style.opacity = '0.7';
+  btn.disabled = true;
 
   try {
-    // 1. 检查购物车是否有货
-    const cartRes = await fetch(window.Shopify.routes.root + 'cart.js');
-    const cart = await cartRes.json();
+    // 1. 【核心逻辑】判断是否在产品页并抓取当前选中的变体
+    // Shopify 标准主题中，选中的 Variant ID 通常存在名为 "id" 的 input 中
+    // 数量通常存在名为 "quantity" 的 input 中
+    const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
+                   || document.querySelector('[name="id"]')?.value;
+    const quantity = document.querySelector('[name="quantity"]')?.value || 1;
 
-    if (cart.item_count === 0) {
-      alert("Your cart is empty!");
-      btn.innerText = '{{ block.settings.btn_text }}';
-      btn.style.opacity = '1';
-      return;
+    // 2. 如果找到了变体 ID，说明在产品页，先执行“加入购物车”动作
+    if (variantId && !isNaN(variantId)) {
+      console.log('检测到产品页，正在加车 Variant ID:', variantId);
+      await fetch(window.Shopify.routes.root + 'cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{
+            id: parseInt(variantId),
+            quantity: parseInt(quantity)
+          }]
+        })
+      });
     }
 
-    // 2. 跳转到 App Proxy 路径
-    // 逻辑：跳转到 /apps/safe-pay，我们的 App 会在那里渲染结账单
-    // 修改这一行：不要在当前窗口跳转，改用 open 打开新窗口
-    // window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
-    
-    // 替换为：
-    const checkoutUrl = window.location.origin + window.Shopify.routes.root + 'apps/safe-pay';
-    window.open(checkoutUrl, '_blank');
+    // 3. 跳转到我们的自定义代理结账页
+    // 此时购物车已经包含了刚才加进去的产品
+    window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     
   } catch (err) {
-    console.error('Checkout error:', err);
-    alert("System error, please try again.");
-    btn.innerText = '{{ block.settings.btn_text }}';
+    console.error('Checkout Redirect Error:', err);
+    // 即使加车报错，也尝试跳转（可能购物车里已经有东西了）
+    window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
   }
 });
 </script>
