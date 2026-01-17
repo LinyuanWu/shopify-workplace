@@ -1,44 +1,36 @@
 {% comment %} 
-  Version 43.0 - 终极视觉修复版
-  1. 解决产品页宽度溢出对齐问题
-  2. 解决侧边栏并排问题，强制垂直堆叠
-  3. 支持全站注入与隐藏开关
+  Version 45.0 - 尊重主题原生样式，仅执行“物理换行”
 {% endcomment %}
 
 <style>
-  /* 强力强迫：所有本插件生成的按钮容器必须独占一行，且宽度对齐 */
-  .bridge-pay-wrapper-fixed {
-    display: block !important;
+  /* 仅针对我们自己的包装盒进行强制换行 */
+  .bridge-pay-flex-break {
+    flex: 0 0 100% !important;
     width: 100% !important;
-    max-width: 100% !important;
-    margin: 10px 0 !important;
+    display: block !important;
+    margin: 0 0 12px 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
-    clear: both !important;
-    flex: 0 0 100% !important; /* 强制 Flex 换行 */
   }
-
-  .bridge-pay-btn-fixed {
-    -webkit-appearance: none;
-    box-sizing: border-box !important;
+  
+  .bridge-btn-common {
     width: 100% !important;
-    max-width: 100% !important;
-    padding: 15px !important;
-    border-radius: 4px !important;
+    padding: 16px !important;
     border: none !important;
+    border-radius: 4px !important;
     font-weight: bold !important;
     font-size: 16px !important;
     cursor: pointer !important;
-    line-height: 1.2 !important;
     display: block !important;
-    text-align: center !important;
+    box-sizing: border-box !important;
   }
 </style>
 
-<!-- 1. 静态按钮：用于产品页/购物车页 -->
+<!-- 1. 产品页显示的静态按钮 -->
 {% if block.settings.show_at_position %}
-<div class="bridge-pay-wrapper-fixed">
-  <button class="bridge-pay-btn-fixed bridge-trigger-js" style="background-color: {{ block.settings.btn_color }}; color: #fff;">
+<div class="bridge-pay-flex-break">
+  <button class="bridge-btn-common bridge-js-click" 
+          style="background-color: {{ block.settings.btn_color }}; color: #fff;">
     {{ block.settings.btn_text }}
   </button>
 </div>
@@ -46,34 +38,32 @@
 
 <script>
 (function() {
-  // 单例保护，确保一个页面只运行一套逻辑
-  if (window.bridgePayAppInitialized) return;
-  window.bridgePayAppInitialized = true;
-
+  // 实时配置
   const CONFIG = {
     text: '{{ block.settings.btn_text }}',
     color: '{{ block.settings.btn_color }}',
     hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
   };
 
-  // 统一的加车及跳转逻辑
-  async function performRedirect(e) {
+  // 避免逻辑重复运行
+  if (window.bridgeActive) return;
+  window.bridgeActive = true;
+
+  // 跳转逻辑
+  async function handleRedirect(e) {
     e.preventDefault();
     const b = e.target;
     b.innerText = 'Connecting...';
-    b.style.opacity = '0.7';
+    b.style.opacity = '0.6';
 
     try {
-      // 捕获变体 ID
       const v = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
              || document.querySelector('[name="id"]')?.value;
-      const q = document.querySelector('[name="quantity"]')?.value || 1;
-
       if (v && !isNaN(v)) {
         await fetch(window.Shopify.routes.root + 'cart/add.js', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: [{ id: parseInt(v), quantity: parseInt(q) }] })
+          body: JSON.stringify({ items: [{ id: parseInt(v), quantity: 1 }] })
         });
         await new Promise(r => setTimeout(r, 400));
       }
@@ -83,46 +73,44 @@
     }
   }
 
-  // 监听所有带 bridge-trigger-js 类的按钮
+  // 绑定点击
   document.addEventListener('click', function(e) {
-    if (e.target && e.target.classList.contains('bridge-trigger-js')) {
-      performRedirect(e);
+    if (e.target && e.target.classList.contains('bridge-js-click')) {
+      handleRedirect(e);
     }
   });
 
-  // 侧边栏动态注入函数
-  function handleInjectedElements() {
-    const nativeCheckout = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
-    if (!nativeCheckout) return;
+  // 侧边栏动态逻辑
+  function syncDrawer() {
+    const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
+    if (!nativeBtn) return;
 
-    if (!document.getElementById('bridge-drawer-wrapper')) {
-      const wrapper = document.createElement('div');
-      wrapper.id = 'bridge-drawer-wrapper';
-      wrapper.className = 'bridge-pay-wrapper-fixed'; // 赋予强力换行类
+    if (!document.getElementById('bridge-drawer-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.id = 'bridge-drawer-wrap';
+      wrap.className = 'bridge-pay-flex-break';
 
       const btn = document.createElement('button');
-      btn.className = 'bridge-pay-btn-fixed bridge-trigger-js';
+      btn.className = 'bridge-btn-common bridge-js-click';
       btn.innerText = CONFIG.text;
-      btn.type = 'button';
       btn.style.backgroundColor = CONFIG.color;
       btn.style.color = '#fff';
+      btn.type = 'button';
       
-      wrapper.appendChild(btn);
-      
-      // 插入在原生结账按钮上方
-      nativeCheckout.parentNode.insertBefore(wrapper, nativeCheckout);
+      wrap.appendChild(btn);
+      // 插入到原生按钮之前
+      nativeBtn.parentNode.insertBefore(wrap, nativeBtn);
+    }
 
-      // 处理原生按钮隐藏
-      if (CONFIG.hideNative) {
-        nativeCheckout.style.setProperty('display', 'none', 'important');
-      } else {
-        nativeCheckout.style.display = '';
-      }
+    // 【关键修复】：如果不隐藏，我们彻底移除 style 属性，让主题接管
+    if (CONFIG.hideNative) {
+      nativeBtn.style.setProperty('display', 'none', 'important');
+    } else {
+      nativeBtn.style.removeProperty('display'); // 移除我们加的所有干扰
     }
   }
 
-  // 监听侧边栏弹出
-  const observer = new MutationObserver(handleInjectedElements);
+  const observer = new MutationObserver(syncDrawer);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
