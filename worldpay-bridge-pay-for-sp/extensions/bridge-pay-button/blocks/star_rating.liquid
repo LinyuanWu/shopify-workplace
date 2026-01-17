@@ -1,10 +1,11 @@
 {% comment %} 
-  Version 36.0 - 解决并排问题，支持页脚隐藏本体，保持全站注入逻辑
+  Version 37.0 - 修复可见性 Bug，优化隐藏逻辑，强制垂直排列
 {% endcomment %}
 
-<!-- 本体容器默认隐藏，防止在页脚显示。只有在特定页面（如产品页）我们可以通过装修手动开启 -->
-<div class="bridge-pay-static-wrapper" style="{% if block.settings.show_at_position %}{% else %}display: none !important;{% endif %} margin: 20px 0;">
-  <button id="bridge-checkout-btn-static" style="
+<!-- 静态按钮部分：只有勾选了“在此处显示”才会渲染 -->
+{% if block.settings.show_at_position %}
+<div class="bridge-pay-static-wrapper" style="margin: 20px 0; width: 100%;">
+  <button class="bridge-checkout-trigger-btn" style="
     background-color: {{ block.settings.btn_color }}; 
     color: #fff; width: 100%; padding: 15px; border: none; border-radius: 4px; 
     font-weight: bold; cursor: pointer; font-size: 16px;
@@ -12,20 +13,28 @@
     {{ block.settings.btn_text }}
   </button>
 </div>
+{% endif %}
 
 <script>
 (function() {
+  // 防止脚本重复加载执行
+  if (window.bridgePayInitialized) return;
+  window.bridgePayInitialized = true;
+
   const CONFIG = {
     text: '{{ block.settings.btn_text }}',
     color: '{{ block.settings.btn_color }}',
-    hideNative: {{ block.settings.hide_native | default: false }}
+    hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
   };
 
-  async function handleAction(e) {
+  // 跳转处理函数
+  async function handleCheckout(e) {
     e.preventDefault();
     const btn = e.target;
+    const originalText = btn.innerText;
     btn.innerText = 'Processing...';
     btn.disabled = true;
+
     try {
       const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
                      || document.querySelector('[name="id"]')?.value;
@@ -43,11 +52,15 @@
     }
   }
 
-  // 1. 静态按钮（如果显示的话）
-  document.getElementById('bridge-checkout-btn-static')?.addEventListener('click', handleAction);
+  // 1. 监听静态按钮点击
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('bridge-checkout-trigger-btn')) {
+      handleCheckout(e);
+    }
+  });
 
-  // 2. 侧边栏动态注入（修复左右并排逻辑）
-  function injectButton() {
+  // 2. 侧边栏注入逻辑
+  function injectToDrawer() {
     const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
     
     if (nativeBtn && !document.getElementById('injected-bridge-btn')) {
@@ -56,37 +69,36 @@
       bridgeBtn.innerText = CONFIG.text;
       bridgeBtn.type = 'button';
       
-      // 【样式大手术】：强制 100% 宽度，防止并排
+      // 强制 100% 宽度和上下排列
       bridgeBtn.style.cssText = `
         background-color: ${CONFIG.color} !important;
         color: #fff !important; 
         width: 100% !important; 
-        max-width: 100% !important;
-        flex: 0 0 100% !important; 
-        padding: 15px !important; 
+        display: block !important;
+        margin-bottom: 12px !important;
+        padding: 16px !important; 
         border: none !important; 
         border-radius: 4px !important;
         font-weight: bold !important; 
         cursor: pointer !important; 
         font-size: 16px !important; 
-        margin-bottom: 12px !important;
-        display: block !important;
         box-sizing: border-box !important;
       `;
       
-      bridgeBtn.onclick = handleAction;
+      bridgeBtn.onclick = handleCheckout;
       
-      // 插入到原生按钮的上方
+      // 插入在原生按钮上方
       nativeBtn.parentNode.insertBefore(bridgeBtn, nativeBtn);
 
-      // 隐藏逻辑
+      // 根据配置隐藏原生按钮
       if (CONFIG.hideNative) {
         nativeBtn.style.setProperty('display', 'none', 'important');
       }
     }
   }
 
-  const observer = new MutationObserver(injectButton);
+  // 启动观察器
+  const observer = new MutationObserver(injectToDrawer);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
@@ -99,7 +111,7 @@
     { "type": "text", "id": "btn_text", "label": "Button Text", "default": "SECURE CHECKOUT (WORLDPAY)" },
     { "type": "color", "id": "btn_color", "label": "Button Color", "default": "#000000" },
     { "type": "checkbox", "id": "hide_native", "label": "Hide Native Checkout Button", "default": false },
-    { "type": "checkbox", "id": "show_at_position", "label": "Show Button at this location", "default": false }
+    { "type": "checkbox", "id": "show_at_position", "label": "Show Button at this location", "default": true }
   ]
 }
 {% endschema %}
