@@ -1,14 +1,14 @@
 {% comment %} 
-  Version 37.0 - 修复可见性 Bug，优化隐藏逻辑，强制垂直排列
+  Version 39.0 - 融合 V33 的布局机制与 V38 的包装盒技术，解决可见性与并排问题
 {% endcomment %}
 
-<!-- 静态按钮部分：只有勾选了“在此处显示”才会渲染 -->
+<!-- 静态按钮：仅当勾选时在当前位置（如产品页）显示 -->
 {% if block.settings.show_at_position %}
-<div class="bridge-pay-static-wrapper" style="margin: 20px 0; width: 100%;">
+<div class="bridge-pay-static-container" style="margin: 20px 0; width: 100%; display: block !important;">
   <button class="bridge-checkout-trigger-btn" style="
     background-color: {{ block.settings.btn_color }}; 
     color: #fff; width: 100%; padding: 15px; border: none; border-radius: 4px; 
-    font-weight: bold; cursor: pointer; font-size: 16px;
+    font-weight: bold; cursor: pointer; font-size: 16px; display: block !important;
   ">
     {{ block.settings.btn_text }}
   </button>
@@ -17,7 +17,7 @@
 
 <script>
 (function() {
-  // 防止脚本重复加载执行
+  // 核心：单例保护，防止脚本重复执行
   if (window.bridgePayInitialized) return;
   window.bridgePayInitialized = true;
 
@@ -27,22 +27,22 @@
     hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
   };
 
-  // 跳转处理函数
   async function handleCheckout(e) {
     e.preventDefault();
     const btn = e.target;
-    const originalText = btn.innerText;
     btn.innerText = 'Processing...';
     btn.disabled = true;
 
     try {
       const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
                      || document.querySelector('[name="id"]')?.value;
+      const quantity = document.querySelector('[name="quantity"]')?.value || 1;
+
       if (variantId && !isNaN(variantId)) {
         await fetch(window.Shopify.routes.root + 'cart/add.js', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] })
+          body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: parseInt(quantity) }] })
         });
         await new Promise(r => setTimeout(r, 400));
       }
@@ -52,52 +52,52 @@
     }
   }
 
-  // 1. 监听静态按钮点击
+  // 1. 代理事件处理
   document.addEventListener('click', function(e) {
     if (e.target && e.target.classList.contains('bridge-checkout-trigger-btn')) {
       handleCheckout(e);
     }
   });
 
-  // 2. 侧边栏注入逻辑
+  // 2. 注入逻辑 (融合 V33 成功样式)
   function injectToDrawer() {
     const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
     
-    if (nativeBtn && !document.getElementById('injected-bridge-btn')) {
+    if (nativeBtn && !document.getElementById('bridge-injected-wrapper')) {
+      // 创建强制换行的包装盒
+      const wrapper = document.createElement('div');
+      wrapper.id = 'bridge-injected-wrapper';
+      // 样式核心：flex: 0 0 100% 确保其独占一行
+      wrapper.style.cssText = 'width: 100% !important; flex: 0 0 100% !important; display: block !important; margin-bottom: 12px !important; order: -1 !important;';
+
       const bridgeBtn = document.createElement('button');
-      bridgeBtn.id = 'injected-bridge-btn';
       bridgeBtn.innerText = CONFIG.text;
       bridgeBtn.type = 'button';
-      
-      // 强制 100% 宽度和上下排列
       bridgeBtn.style.cssText = `
         background-color: ${CONFIG.color} !important;
         color: #fff !important; 
         width: 100% !important; 
-        display: block !important;
-        margin-bottom: 12px !important;
         padding: 16px !important; 
         border: none !important; 
         border-radius: 4px !important;
         font-weight: bold !important; 
         cursor: pointer !important; 
-        font-size: 16px !important; 
-        box-sizing: border-box !important;
+        font-size: 16px !important;
+        display: block !important;
       `;
       
       bridgeBtn.onclick = handleCheckout;
+      wrapper.appendChild(bridgeBtn);
       
-      // 插入在原生按钮上方
-      nativeBtn.parentNode.insertBefore(bridgeBtn, nativeBtn);
+      // 插入
+      nativeBtn.parentNode.insertBefore(wrapper, nativeBtn);
 
-      // 根据配置隐藏原生按钮
       if (CONFIG.hideNative) {
         nativeBtn.style.setProperty('display', 'none', 'important');
       }
     }
   }
 
-  // 启动观察器
   const observer = new MutationObserver(injectToDrawer);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
