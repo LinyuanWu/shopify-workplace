@@ -1,14 +1,25 @@
 {% comment %} 
-  Version 39.0 - 融合 V33 的布局机制与 V38 的包装盒技术，解决可见性与并排问题
+  Version 42.0 - 修复产品页按钮对齐（宽度溢出）问题，保持侧边栏上下排列逻辑
 {% endcomment %}
 
-<!-- 静态按钮：仅当勾选时在当前位置（如产品页）显示 -->
+<!-- 1. 静态按钮：修复宽度对齐问题 -->
 {% if block.settings.show_at_position %}
-<div class="bridge-pay-static-container" style="margin: 20px 0; width: 100%; display: block !important;">
+<div class="bridge-pay-static-box" style="margin: 20px 0; width: 100%; box-sizing: border-box;">
   <button class="bridge-checkout-trigger-btn" style="
     background-color: {{ block.settings.btn_color }}; 
-    color: #fff; width: 100%; padding: 15px; border: none; border-radius: 4px; 
-    font-weight: bold; cursor: pointer; font-size: 16px; display: block !important;
+    color: #fff; 
+    width: 100%; 
+    max-width: 100%; /* 确保不超出父级 */
+    padding: 15px; 
+    border: none; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    cursor: pointer; 
+    font-size: 16px; 
+    display: block;
+    box-sizing: border-box !important; /* 关键：确保 padding 不增加按钮总宽度 */
+    margin: 0 auto;
+    line-height: 1.5;
   ">
     {{ block.settings.btn_text }}
   </button>
@@ -17,21 +28,15 @@
 
 <script>
 (function() {
-  // 核心：单例保护，防止脚本重复执行
-  if (window.bridgePayInitialized) return;
-  window.bridgePayInitialized = true;
+  const btnText = '{{ block.settings.btn_text }}';
+  const btnColor = '{{ block.settings.btn_color }}';
+  const hideNative = {% if block.settings.hide_native %}true{% else %}false{% endif %};
 
-  const CONFIG = {
-    text: '{{ block.settings.btn_text }}',
-    color: '{{ block.settings.btn_color }}',
-    hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
-  };
-
-  async function handleCheckout(e) {
+  async function startCheckout(e) {
     e.preventDefault();
-    const btn = e.target;
-    btn.innerText = 'Processing...';
-    btn.disabled = true;
+    const targetBtn = e.target;
+    targetBtn.innerText = 'Processing...';
+    targetBtn.disabled = true;
 
     try {
       const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
@@ -52,53 +57,51 @@
     }
   }
 
-  // 1. 代理事件处理
+  // A. 静态按钮点击监听
   document.addEventListener('click', function(e) {
     if (e.target && e.target.classList.contains('bridge-checkout-trigger-btn')) {
-      handleCheckout(e);
+      startCheckout(e);
     }
   });
 
-  // 2. 注入逻辑 (融合 V33 成功样式)
-  function injectToDrawer() {
+  // B. 侧边栏动态注入（保持 V41 成功的上下排版）
+  function handleDrawer() {
     const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
-    
-    if (nativeBtn && !document.getElementById('bridge-injected-wrapper')) {
-      // 创建强制换行的包装盒
-      const wrapper = document.createElement('div');
-      wrapper.id = 'bridge-injected-wrapper';
-      // 样式核心：flex: 0 0 100% 确保其独占一行
-      wrapper.style.cssText = 'width: 100% !important; flex: 0 0 100% !important; display: block !important; margin-bottom: 12px !important; order: -1 !important;';
+    if (!nativeBtn) return;
 
+    if (!document.getElementById('unique-bridge-drawer-btn')) {
       const bridgeBtn = document.createElement('button');
-      bridgeBtn.innerText = CONFIG.text;
+      bridgeBtn.id = 'unique-bridge-drawer-btn';
+      bridgeBtn.innerText = btnText;
       bridgeBtn.type = 'button';
+      
       bridgeBtn.style.cssText = `
-        background-color: ${CONFIG.color} !important;
+        background-color: ${btnColor} !important;
         color: #fff !important; 
         width: 100% !important; 
+        margin-bottom: 12px !important;
         padding: 16px !important; 
         border: none !important; 
         border-radius: 4px !important;
         font-weight: bold !important; 
         cursor: pointer !important; 
-        font-size: 16px !important;
+        font-size: 16px !important; 
         display: block !important;
+        box-sizing: border-box !important;
       `;
       
-      bridgeBtn.onclick = handleCheckout;
-      wrapper.appendChild(bridgeBtn);
-      
-      // 插入
-      nativeBtn.parentNode.insertBefore(wrapper, nativeBtn);
+      bridgeBtn.onclick = startCheckout;
+      nativeBtn.parentNode.insertBefore(bridgeBtn, nativeBtn);
 
-      if (CONFIG.hideNative) {
+      if (hideNative) {
         nativeBtn.style.setProperty('display', 'none', 'important');
+      } else {
+        nativeBtn.style.display = '';
       }
     }
   }
 
-  const observer = new MutationObserver(injectToDrawer);
+  const observer = new MutationObserver(handleDrawer);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
