@@ -1,26 +1,44 @@
 {% comment %} 
-  Version 42.0 - 修复产品页按钮对齐（宽度溢出）问题，保持侧边栏上下排列逻辑
+  Version 43.0 - 终极视觉修复版
+  1. 解决产品页宽度溢出对齐问题
+  2. 解决侧边栏并排问题，强制垂直堆叠
+  3. 支持全站注入与隐藏开关
 {% endcomment %}
 
-<!-- 1. 静态按钮：修复宽度对齐问题 -->
+<style>
+  /* 强力强迫：所有本插件生成的按钮容器必须独占一行，且宽度对齐 */
+  .bridge-pay-wrapper-fixed {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 10px 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    clear: both !important;
+    flex: 0 0 100% !important; /* 强制 Flex 换行 */
+  }
+
+  .bridge-pay-btn-fixed {
+    -webkit-appearance: none;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 15px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    line-height: 1.2 !important;
+    display: block !important;
+    text-align: center !important;
+  }
+</style>
+
+<!-- 1. 静态按钮：用于产品页/购物车页 -->
 {% if block.settings.show_at_position %}
-<div class="bridge-pay-static-box" style="margin: 20px 0; width: 100%; box-sizing: border-box;">
-  <button class="bridge-checkout-trigger-btn" style="
-    background-color: {{ block.settings.btn_color }}; 
-    color: #fff; 
-    width: 100%; 
-    max-width: 100%; /* 确保不超出父级 */
-    padding: 15px; 
-    border: none; 
-    border-radius: 4px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    font-size: 16px; 
-    display: block;
-    box-sizing: border-box !important; /* 关键：确保 padding 不增加按钮总宽度 */
-    margin: 0 auto;
-    line-height: 1.5;
-  ">
+<div class="bridge-pay-wrapper-fixed">
+  <button class="bridge-pay-btn-fixed bridge-trigger-js" style="background-color: {{ block.settings.btn_color }}; color: #fff;">
     {{ block.settings.btn_text }}
   </button>
 </div>
@@ -28,26 +46,34 @@
 
 <script>
 (function() {
-  const btnText = '{{ block.settings.btn_text }}';
-  const btnColor = '{{ block.settings.btn_color }}';
-  const hideNative = {% if block.settings.hide_native %}true{% else %}false{% endif %};
+  // 单例保护，确保一个页面只运行一套逻辑
+  if (window.bridgePayAppInitialized) return;
+  window.bridgePayAppInitialized = true;
 
-  async function startCheckout(e) {
+  const CONFIG = {
+    text: '{{ block.settings.btn_text }}',
+    color: '{{ block.settings.btn_color }}',
+    hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
+  };
+
+  // 统一的加车及跳转逻辑
+  async function performRedirect(e) {
     e.preventDefault();
-    const targetBtn = e.target;
-    targetBtn.innerText = 'Processing...';
-    targetBtn.disabled = true;
+    const b = e.target;
+    b.innerText = 'Connecting...';
+    b.style.opacity = '0.7';
 
     try {
-      const variantId = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
-                     || document.querySelector('[name="id"]')?.value;
-      const quantity = document.querySelector('[name="quantity"]')?.value || 1;
+      // 捕获变体 ID
+      const v = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
+             || document.querySelector('[name="id"]')?.value;
+      const q = document.querySelector('[name="quantity"]')?.value || 1;
 
-      if (variantId && !isNaN(variantId)) {
+      if (v && !isNaN(v)) {
         await fetch(window.Shopify.routes.root + 'cart/add.js', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: parseInt(quantity) }] })
+          body: JSON.stringify({ items: [{ id: parseInt(v), quantity: parseInt(q) }] })
         });
         await new Promise(r => setTimeout(r, 400));
       }
@@ -57,51 +83,46 @@
     }
   }
 
-  // A. 静态按钮点击监听
+  // 监听所有带 bridge-trigger-js 类的按钮
   document.addEventListener('click', function(e) {
-    if (e.target && e.target.classList.contains('bridge-checkout-trigger-btn')) {
-      startCheckout(e);
+    if (e.target && e.target.classList.contains('bridge-trigger-js')) {
+      performRedirect(e);
     }
   });
 
-  // B. 侧边栏动态注入（保持 V41 成功的上下排版）
-  function handleDrawer() {
-    const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
-    if (!nativeBtn) return;
+  // 侧边栏动态注入函数
+  function handleInjectedElements() {
+    const nativeCheckout = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
+    if (!nativeCheckout) return;
 
-    if (!document.getElementById('unique-bridge-drawer-btn')) {
-      const bridgeBtn = document.createElement('button');
-      bridgeBtn.id = 'unique-bridge-drawer-btn';
-      bridgeBtn.innerText = btnText;
-      bridgeBtn.type = 'button';
-      
-      bridgeBtn.style.cssText = `
-        background-color: ${btnColor} !important;
-        color: #fff !important; 
-        width: 100% !important; 
-        margin-bottom: 12px !important;
-        padding: 16px !important; 
-        border: none !important; 
-        border-radius: 4px !important;
-        font-weight: bold !important; 
-        cursor: pointer !important; 
-        font-size: 16px !important; 
-        display: block !important;
-        box-sizing: border-box !important;
-      `;
-      
-      bridgeBtn.onclick = startCheckout;
-      nativeBtn.parentNode.insertBefore(bridgeBtn, nativeBtn);
+    if (!document.getElementById('bridge-drawer-wrapper')) {
+      const wrapper = document.createElement('div');
+      wrapper.id = 'bridge-drawer-wrapper';
+      wrapper.className = 'bridge-pay-wrapper-fixed'; // 赋予强力换行类
 
-      if (hideNative) {
-        nativeBtn.style.setProperty('display', 'none', 'important');
+      const btn = document.createElement('button');
+      btn.className = 'bridge-pay-btn-fixed bridge-trigger-js';
+      btn.innerText = CONFIG.text;
+      btn.type = 'button';
+      btn.style.backgroundColor = CONFIG.color;
+      btn.style.color = '#fff';
+      
+      wrapper.appendChild(btn);
+      
+      // 插入在原生结账按钮上方
+      nativeCheckout.parentNode.insertBefore(wrapper, nativeCheckout);
+
+      // 处理原生按钮隐藏
+      if (CONFIG.hideNative) {
+        nativeCheckout.style.setProperty('display', 'none', 'important');
       } else {
-        nativeBtn.style.display = '';
+        nativeCheckout.style.display = '';
       }
     }
   }
 
-  const observer = new MutationObserver(handleDrawer);
+  // 监听侧边栏弹出
+  const observer = new MutationObserver(handleInjectedElements);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
