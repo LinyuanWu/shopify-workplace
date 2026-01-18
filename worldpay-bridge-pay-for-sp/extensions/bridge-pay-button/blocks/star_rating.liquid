@@ -1,5 +1,5 @@
 {% comment %} 
-  Version 48.0 - 采用明确命名区分策略 + 布局强制修复
+  Version 49.0 - 采用 CSS 注入法强力隐藏原生按钮 (解决产品页隐藏失效问题)
 {% endcomment %}
 
 <style>
@@ -25,7 +25,7 @@
   }
 </style>
 
-<!-- 1. 产品页静态按钮：明确赋予 'bridge-type-product' -->
+<!-- 1. 产品页静态按钮 -->
 {% if block.settings.show_at_position %}
 <div class="bridge-pay-flex-break">
   <button class="bridge-btn-common bridge-js-click bridge-type-product" 
@@ -47,35 +47,60 @@
   window.bridgeActive = true;
 
   // ==========================================
-  // 1. 点击事件处理 (得益于命名区分，逻辑变得非常简单)
+  // 1. [新增] CSS 强力隐藏逻辑 (基于 URL)
+  // ==========================================
+  function injectHidingStyles() {
+    if (!CONFIG.hideNative) return;
+
+    const path = window.location.pathname;
+    // 你的策略：只要 URL 包含 /products/ 就认为是产品页
+    // 同时为了保险，也加上主页（主页可能有 Featured Product）
+    const isTargetPage = path.includes('/products/') || path === '/' || path.includes('/index');
+
+    if (isTargetPage) {
+      const styleId = 'bridge-hide-native-css';
+      if (document.getElementById(styleId)) return; // 防止重复注入
+
+      const style = document.createElement('style');
+      style.id = styleId;
+      // 这里列出了所有可能的原生按钮选择器，一次性全部隐藏
+      // :not(.bridge-btn-common) 是为了保护我们自己的按钮不被误伤
+      style.innerHTML = `
+        form[action*="/cart/add"] [type="submit"]:not(.bridge-btn-common),
+        form[action*="/cart/add"] button[name="add"]:not(.bridge-btn-common),
+        .product-form__submit:not(.bridge-btn-common),
+        .shopify-payment-button,
+        .shopify-payment-button__button,
+        [name="add"]:not(.bridge-btn-common) {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  // ==========================================
+  // 2. 点击事件处理
   // ==========================================
   async function handleRedirect(e) {
     e.preventDefault();
     const btn = e.target;
-
-    // 状态反馈
     btn.innerText = 'Processing...';
     btn.style.opacity = '0.6';
 
     try {
-      // A. 如果是产品页按钮 -> 先加购
+      // 依靠 class 命名精准识别
       if (btn.classList.contains('bridge-type-product')) {
         await performAddToCart(btn);
       }
-      
-      // B. 如果是侧边栏按钮 (bridge-type-drawer) -> 什么都不用做，直接往下走跳转
-      
-      // 统一跳转
+      // 侧边栏按钮直接跳转
       window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
-
     } catch (err) {
       console.error(err);
-      // 出错也尝试跳转
       window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     }
   }
 
-  // 抽离出来的加购逻辑
   async function performAddToCart(btn) {
     const form = btn.closest('form[action*="/cart/add"]') || document.querySelector('form[action*="/cart/add"]');
     let variantId = null;
@@ -85,7 +110,6 @@
       if (input) variantId = input.value;
     }
     
-    // 兜底查找
     if (!variantId) variantId = document.querySelector('[name="id"]')?.value;
     if (!variantId) {
        const params = new URLSearchParams(window.location.search);
@@ -98,24 +122,31 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] })
       });
-      // 等待 session 同步
       await new Promise(r => setTimeout(r, 400));
     }
   }
 
   // ==========================================
-  // 2. 侧边栏/购物车注入逻辑
+  // 3. 侧边栏注入逻辑 (保留之前的修复)
   // ==========================================
   function injectDrawerButton() {
+    // 这里的选择器是针对侧边栏/购物车的，不涉及产品页
     const selectors = ['button[name="checkout"]', '.cart__checkout-button', '#checkout', 'form[action="/cart"] [type="submit"]'];
     const nativeBtns = document.querySelectorAll(selectors.join(','));
     
     nativeBtns.forEach(nativeBtn => {
-      // 检查注入标记
+      // 避免重复
       const prev = nativeBtn.previousElementSibling;
       if (prev && prev.id === 'bridge-drawer-wrap') {
-        fixParentLayout(nativeBtn); // 即使已存在，也要再次确保布局正确
+        fixParentLayout(nativeBtn);
         return; 
+      }
+      
+      // 避免在产品页误注入 (虽然有 CSS 隐藏，但 JS 逻辑也要严谨)
+      // 如果当前是在 Product 页，且找到的不是侧边栏里的按钮，就跳过
+      if (window.location.pathname.includes('/products/') && !nativeBtn.closest('.drawer') && !nativeBtn.closest('.cart-drawer')) {
+         // 这里根据你的需求，通常产品页不需要插入第二个按钮（因为有静态 Liquid 按钮了）
+         // 但为了保险起见，这里不return，依靠上面的 CSS 隐藏原生，依靠 Liquid 显示我们的
       }
 
       const wrap = document.createElement('div');
@@ -123,7 +154,6 @@
       wrap.className = 'bridge-pay-flex-break';
 
       const btn = document.createElement('button');
-      // [关键点]：明确赋予 'bridge-type-drawer'
       btn.className = 'bridge-btn-common bridge-js-click bridge-type-drawer'; 
       btn.innerText = CONFIG.text;
       btn.style.backgroundColor = CONFIG.color;
@@ -133,10 +163,10 @@
       wrap.appendChild(btn);
       nativeBtn.parentNode.insertBefore(wrap, nativeBtn);
 
-      // 修复布局冲突 (必须保留)
       fixParentLayout(nativeBtn);
 
-      // 处理原生隐藏
+      // 侧边栏的原生按钮依旧单独处理隐藏 (display:none)
+      // 因为上面 injectHidingStyles 主要针对产品页 AddToCart
       if (CONFIG.hideNative) {
         nativeBtn.style.setProperty('display', 'none', 'important');
       } else {
@@ -145,7 +175,6 @@
     });
   }
 
-  // 布局修复函数 (解决电脑端挤压)
   function fixParentLayout(nativeBtn) {
     const parent = nativeBtn.parentNode;
     if (parent) {
@@ -157,23 +186,11 @@
   }
 
   // ==========================================
-  // 3. 产品页原生按钮隐藏
+  // 4. 初始化
   // ==========================================
-  function hideProductPageNativeBtns() {
-    if (!CONFIG.hideNative) return;
-    const selectors = ['button[name="add"]', '.product-form__submit', '.shopify-payment-button'];
-    document.querySelectorAll(selectors.join(',')).forEach(btn => {
-      btn.style.setProperty('display', 'none', 'important');
-    });
-  }
-
-  // ==========================================
-  // 4. 初始化与监听
-  // ==========================================
-  function syncAll() {
-    injectDrawerButton();
-    hideProductPageNativeBtns();
-  }
+  
+  // 立即执行一次 CSS 注入
+  injectHidingStyles();
 
   document.addEventListener('click', function(e) {
     if (e.target && e.target.classList.contains('bridge-js-click')) {
@@ -181,9 +198,16 @@
     }
   });
 
-  const observer = new MutationObserver(syncAll);
+  const observer = new MutationObserver(function() {
+    injectDrawerButton();
+    // 假如是单页应用切换路由，再次检查是否需要注入 CSS
+    injectHidingStyles(); 
+  });
+  
   observer.observe(document.body, { childList: true, subtree: true });
-  syncAll();
+  
+  // 初始运行
+  injectDrawerButton();
 
 })();
 </script>
