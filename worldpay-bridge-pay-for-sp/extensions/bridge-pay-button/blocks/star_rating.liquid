@@ -1,5 +1,5 @@
 {% comment %} 
-  Version 50.0 - 采用 CSS 注入法强力隐藏原生按钮 (解决产品页隐藏失效问题)
+  Version 49.0 - 采用 CSS 注入法强力隐藏原生按钮 (解决产品页隐藏失效问题)
 {% endcomment %}
 
 <style>
@@ -66,34 +66,12 @@
       // 这里列出了所有可能的原生按钮选择器，一次性全部隐藏
       // :not(.bridge-btn-common) 是为了保护我们自己的按钮不被误伤
       style.innerHTML = `
-        /* --------------------------------------------------------
-         1. 产品页：加入购物车 (Add to Cart)
-         -------------------------------------------------------- */
         form[action*="/cart/add"] [type="submit"]:not(.bridge-btn-common),
         form[action*="/cart/add"] button[name="add"]:not(.bridge-btn-common),
         .product-form__submit:not(.bridge-btn-common),
         .shopify-payment-button,
-        [name="add"]:not(.bridge-btn-common),
-      
-        /* --------------------------------------------------------
-         2. 侧边栏/购物车页：去结账 (Checkout) - "通杀"选择器
-         -------------------------------------------------------- */
-        /* 针对 Dawn 及新版官方主题 */
-        #CartDrawer-Checkout,
-        
-        /* 针对通用 Shopify 规范 (最强规则) */
-        /* 几乎所有主题的结算按钮都必须带有 name="checkout" */
-        button[name="checkout"]:not(.bridge-btn-common),
-        input[name="checkout"]:not(.bridge-btn-common),
-        
-        /* 针对常见 ID 和 Class */
-        #checkout:not(.bridge-btn-common),
-        .cart__checkout-button:not(.bridge-btn-common),
-        .cart__submit:not(.bridge-btn-common),
-        
-        /* 针对位于购物车表单内的提交按钮 */
-        form[action="/cart"] [type="submit"]:not(.bridge-btn-common),
-        .drawer__footer button[type="submit"]:not(.bridge-btn-common) {
+        .shopify-payment-button__button,
+        [name="add"]:not(.bridge-btn-common) {
           display: none !important;
         }
       `;
