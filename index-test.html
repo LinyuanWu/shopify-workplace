@@ -167,6 +167,21 @@
         height: 32px; /* 手机上稍微缩小一点 */
       }
     }
+    
+    /* === 测试环境标题样式 === */
+    .test-env-badge {
+      background-color: #fff4f4; /* 浅红色背景 */
+      color: #c0392b;            /* 深红色文字 */
+      border: 1px dashed #c0392b;
+      padding: 12px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 25px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -175,6 +190,11 @@
   
   <!-- 左侧（移动端下方）：输入表单 -->
   <div class="form-section">
+    
+    <!-- 测试环境标题 -->
+    <div class="test-env-badge">
+      ⚠️ worldpay-test environment
+    </div>
 
     <form id="payment-form">
       <div class="section-title">Contact</div>
@@ -589,7 +609,7 @@
       gateway_mask: gatewayVal,
       origin_domain: window.location.host,
       return_url: window.location.origin + "/pages/thank-you",
-      hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", 
+      hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update?sv=YOUR_SECRET_KEY", 
       line_items: currentCart.items.map(item => ({
         variant_id: item.variant_id,
         quantity: item.quantity,

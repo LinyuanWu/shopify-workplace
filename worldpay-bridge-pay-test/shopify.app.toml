@@ -1,7 +1,9 @@
 # shopify.app.toml
 
-client_id = "9c06f346163068df17929743b590f01a"
-name = "worldpay-bridge-test"
+client_id = "762da8f0649e04d7109426ed60ec6011"  
+name = "worldpay-gate-test-anttk"
+
+
 application_url = "https://safe-paygate.defitopay.com"
 embedded = true
 
