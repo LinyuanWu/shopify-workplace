@@ -1,5 +1,6 @@
 {% comment %} 
-  Version 45.0 - 尊重主题原生样式，仅执行“物理换行”
+  Version 46.0 - 修复重复加购 BUG
+  区分侧边栏/购物车页按钮（直接跳转）与产品页按钮（先加购再跳转）
 {% endcomment %}
 
 <style>
@@ -26,10 +27,11 @@
   }
 </style>
 
-<!-- 1. 产品页显示的静态按钮 -->
+<!-- 1. 产品页显示的静态按钮 (加购 + 跳转) -->
 {% if block.settings.show_at_position %}
 <div class="bridge-pay-flex-break">
-  <button class="bridge-btn-common bridge-js-click" 
+  <!-- 加一个特殊的 class: bridge-product-btn 方便 JS 识别 -->
+  <button class="bridge-btn-common bridge-js-click bridge-product-btn" 
           style="background-color: {{ block.settings.btn_color }}; color: #fff;">
     {{ block.settings.btn_text }}
   </button>
@@ -38,78 +40,118 @@
 
 <script>
 (function() {
-  // 实时配置
   const CONFIG = {
     text: '{{ block.settings.btn_text }}',
     color: '{{ block.settings.btn_color }}',
     hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
   };
 
-  // 避免逻辑重复运行
   if (window.bridgeActive) return;
   window.bridgeActive = true;
 
-  // 跳转逻辑
+  // 核心跳转逻辑
   async function handleRedirect(e) {
     e.preventDefault();
-    const b = e.target;
-    b.innerText = 'Connecting...';
-    b.style.opacity = '0.6';
+    const btn = e.target;
+    
+    // 1. 判断按钮类型
+    // 如果是侧边栏动态插入的按钮，或者是购物车页面的按钮 -> 直接跳转，不加购
+    const isDrawerOrCart = btn.closest('#bridge-drawer-wrap') || window.location.pathname.includes('/cart');
+    
+    // 2. 如果是产品页按钮，才执行“加购”动作
+    // 必须有 bridge-product-btn 类名，且不在侧边栏里
+    const isProductPageBtn = btn.classList.contains('bridge-product-btn') && !isDrawerOrCart;
+
+    btn.innerText = 'Processing...';
+    btn.style.opacity = '0.6';
 
     try {
-      const v = document.querySelector('form[action*="/cart/add"] [name="id"]')?.value 
-             || document.querySelector('[name="id"]')?.value;
-      if (v && !isNaN(v)) {
-        await fetch(window.Shopify.routes.root + 'cart/add.js', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: [{ id: parseInt(v), quantity: 1 }] })
-        });
-        await new Promise(r => setTimeout(r, 400));
+      if (isProductPageBtn) {
+        // --- 产品页逻辑：查找 ID 并加购 ---
+        // 尝试找到产品表单里的 ID 输入框
+        const form = btn.closest('form[action*="/cart/add"]') || document.querySelector('form[action*="/cart/add"]');
+        let variantId = null;
+        
+        if (form) {
+          const input = form.querySelector('[name="id"]');
+          if (input) variantId = input.value;
+        }
+        
+        // 兜底查找
+        if (!variantId) {
+          variantId = document.querySelector('[name="id"]')?.value;
+        }
+
+        if (variantId && !isNaN(variantId)) {
+          // 调用 Shopify API 加购
+          await fetch(window.Shopify.routes.root + 'cart/add.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] })
+          });
+          // 稍微等待一下确保 session 更新
+          await new Promise(r => setTimeout(r, 400));
+        }
       }
+      
+      // 3. 统一跳转
+      // 无论是侧边栏还是产品页，最终都去我们的结账页
       window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
+      
     } catch (err) {
+      console.error(err);
+      // 出错也尝试跳转
       window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
     }
   }
 
-  // 绑定点击
+  // 事件委托：监听所有点击
   document.addEventListener('click', function(e) {
     if (e.target && e.target.classList.contains('bridge-js-click')) {
       handleRedirect(e);
     }
   });
 
-  // 侧边栏动态逻辑
+  // 侧边栏/购物车页按钮注入逻辑
   function syncDrawer() {
-    const nativeBtn = document.querySelector('button[name="checkout"], .cart__checkout-button, #checkout');
-    if (!nativeBtn) return;
+    // 查找原生结账按钮
+    const nativeBtns = document.querySelectorAll('button[name="checkout"], .cart__checkout-button, #checkout');
+    
+    nativeBtns.forEach(nativeBtn => {
+      // 防止重复注入：检查它的父级是否已经有我们的按钮了
+      // 注意：我们在 parentNode 里找 #bridge-drawer-wrap 是不准确的，因为可能有多个按钮
+      // 最好的方法是检查 nativeBtn 的前一个兄弟元素
+      const prev = nativeBtn.previousElementSibling;
+      if (prev && prev.id === 'bridge-drawer-wrap') return; // 已存在
 
-    if (!document.getElementById('bridge-drawer-wrap')) {
+      // 创建包装器
       const wrap = document.createElement('div');
       wrap.id = 'bridge-drawer-wrap';
-      wrap.className = 'bridge-pay-flex-break';
+      wrap.className = 'bridge-pay-flex-break'; // 强制换行
 
+      // 创建按钮 (注意：这里不加 bridge-product-btn 类名)
       const btn = document.createElement('button');
-      btn.className = 'bridge-btn-common bridge-js-click';
+      btn.className = 'bridge-btn-common bridge-js-click'; // 通用类名
       btn.innerText = CONFIG.text;
       btn.style.backgroundColor = CONFIG.color;
       btn.style.color = '#fff';
       btn.type = 'button';
       
       wrap.appendChild(btn);
+      
       // 插入到原生按钮之前
       nativeBtn.parentNode.insertBefore(wrap, nativeBtn);
-    }
 
-    // 【关键修复】：如果不隐藏，我们彻底移除 style 属性，让主题接管
-    if (CONFIG.hideNative) {
-      nativeBtn.style.setProperty('display', 'none', 'important');
-    } else {
-      nativeBtn.style.removeProperty('display'); // 移除我们加的所有干扰
-    }
+      // 处理原生按钮显示/隐藏
+      if (CONFIG.hideNative) {
+        nativeBtn.style.setProperty('display', 'none', 'important');
+      } else {
+        nativeBtn.style.removeProperty('display');
+      }
+    });
   }
 
+  // 监控 DOM 变化 (适配动态加载的侧边栏)
   const observer = new MutationObserver(syncDrawer);
   observer.observe(document.body, { childList: true, subtree: true });
 })();
