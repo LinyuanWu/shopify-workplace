@@ -1,0 +1,226 @@
+{% comment %} 
+  Version 49.0 - 采用 CSS 注入法强力隐藏原生按钮 (解决产品页隐藏失效问题)
+{% endcomment %}
+
+<style>
+  /* 公共样式 */
+  .bridge-pay-flex-break {
+    flex: 0 0 100% !important;
+    width: 100% !important;
+    display: block !important;
+    margin: 0 0 10px 0 !important;
+  }
+  
+  .bridge-btn-common {
+    width: 100% !important;
+    padding: 16px !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+  }
+</style>
+
+<!-- 1. 产品页静态按钮 -->
+{% if block.settings.show_at_position %}
+<div class="bridge-pay-flex-break">
+  <button class="bridge-btn-common bridge-js-click bridge-type-product" 
+          style="background-color: {{ block.settings.btn_color }}; color: #fff;">
+    {{ block.settings.btn_text }}
+  </button>
+</div>
+{% endif %}
+
+<script>
+(function() {
+  const CONFIG = {
+    text: '{{ block.settings.btn_text }}',
+    color: '{{ block.settings.btn_color }}',
+    hideNative: {% if block.settings.hide_native %}true{% else %}false{% endif %}
+  };
+
+  if (window.bridgeActive) return;
+  window.bridgeActive = true;
+
+  // ==========================================
+  // 1. [新增] CSS 强力隐藏逻辑 (基于 URL)
+  // ==========================================
+  function injectHidingStyles() {
+    if (!CONFIG.hideNative) return;
+
+    const path = window.location.pathname;
+    // 你的策略：只要 URL 包含 /products/ 就认为是产品页
+    // 同时为了保险，也加上主页（主页可能有 Featured Product）
+    const isTargetPage = path.includes('/products/') || path === '/' || path.includes('/index');
+
+    if (isTargetPage) {
+      const styleId = 'bridge-hide-native-css';
+      if (document.getElementById(styleId)) return; // 防止重复注入
+
+      const style = document.createElement('style');
+      style.id = styleId;
+      // 这里列出了所有可能的原生按钮选择器，一次性全部隐藏
+      // :not(.bridge-btn-common) 是为了保护我们自己的按钮不被误伤
+      style.innerHTML = `
+        form[action*="/cart/add"] [type="submit"]:not(.bridge-btn-common),
+        form[action*="/cart/add"] button[name="add"]:not(.bridge-btn-common),
+        .product-form__submit:not(.bridge-btn-common),
+        .shopify-payment-button,
+        .shopify-payment-button__button,
+        [name="add"]:not(.bridge-btn-common) {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  // ==========================================
+  // 2. 点击事件处理
+  // ==========================================
+  async function handleRedirect(e) {
+    e.preventDefault();
+    const btn = e.target;
+    btn.innerText = 'Processing...';
+    btn.style.opacity = '0.6';
+
+    try {
+      // 依靠 class 命名精准识别
+      if (btn.classList.contains('bridge-type-product')) {
+        await performAddToCart(btn);
+      }
+      // 侧边栏按钮直接跳转
+      window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
+    } catch (err) {
+      console.error(err);
+      window.location.href = window.Shopify.routes.root + 'apps/safe-pay';
+    }
+  }
+
+  async function performAddToCart(btn) {
+    const form = btn.closest('form[action*="/cart/add"]') || document.querySelector('form[action*="/cart/add"]');
+    let variantId = null;
+    
+    if (form) {
+      const input = form.querySelector('[name="id"]');
+      if (input) variantId = input.value;
+    }
+    
+    if (!variantId) variantId = document.querySelector('[name="id"]')?.value;
+    if (!variantId) {
+       const params = new URLSearchParams(window.location.search);
+       variantId = params.get('variant');
+    }
+
+    if (variantId && !isNaN(variantId)) {
+      await fetch(window.Shopify.routes.root + 'cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: [{ id: parseInt(variantId), quantity: 1 }] })
+      });
+      await new Promise(r => setTimeout(r, 400));
+    }
+  }
+
+  // ==========================================
+  // 3. 侧边栏注入逻辑 (保留之前的修复)
+  // ==========================================
+  function injectDrawerButton() {
+    // 这里的选择器是针对侧边栏/购物车的，不涉及产品页
+    const selectors = ['button[name="checkout"]', '.cart__checkout-button', '#checkout', 'form[action="/cart"] [type="submit"]'];
+    const nativeBtns = document.querySelectorAll(selectors.join(','));
+    
+    nativeBtns.forEach(nativeBtn => {
+      // 避免重复
+      const prev = nativeBtn.previousElementSibling;
+      if (prev && prev.id === 'bridge-drawer-wrap') {
+        fixParentLayout(nativeBtn);
+        return; 
+      }
+      
+      // 避免在产品页误注入 (虽然有 CSS 隐藏，但 JS 逻辑也要严谨)
+      // 如果当前是在 Product 页，且找到的不是侧边栏里的按钮，就跳过
+      if (window.location.pathname.includes('/products/') && !nativeBtn.closest('.drawer') && !nativeBtn.closest('.cart-drawer')) {
+         // 这里根据你的需求，通常产品页不需要插入第二个按钮（因为有静态 Liquid 按钮了）
+         // 但为了保险起见，这里不return，依靠上面的 CSS 隐藏原生，依靠 Liquid 显示我们的
+      }
+
+      const wrap = document.createElement('div');
+      wrap.id = 'bridge-drawer-wrap';
+      wrap.className = 'bridge-pay-flex-break';
+
+      const btn = document.createElement('button');
+      btn.className = 'bridge-btn-common bridge-js-click bridge-type-drawer'; 
+      btn.innerText = CONFIG.text;
+      btn.style.backgroundColor = CONFIG.color;
+      btn.style.color = '#fff';
+      btn.type = 'button';
+      
+      wrap.appendChild(btn);
+      nativeBtn.parentNode.insertBefore(wrap, nativeBtn);
+
+      fixParentLayout(nativeBtn);
+
+      // 侧边栏的原生按钮依旧单独处理隐藏 (display:none)
+      // 因为上面 injectHidingStyles 主要针对产品页 AddToCart
+      if (CONFIG.hideNative) {
+        nativeBtn.style.setProperty('display', 'none', 'important');
+      } else {
+        nativeBtn.style.removeProperty('display');
+      }
+    });
+  }
+
+  function fixParentLayout(nativeBtn) {
+    const parent = nativeBtn.parentNode;
+    if (parent) {
+      parent.style.setProperty('display', 'flex', 'important');
+      parent.style.setProperty('flex-direction', 'column', 'important');
+      parent.style.setProperty('align-items', 'stretch', 'important');
+      parent.style.setProperty('gap', '10px', 'important');
+    }
+  }
+
+  // ==========================================
+  // 4. 初始化
+  // ==========================================
+  
+  // 立即执行一次 CSS 注入
+  injectHidingStyles();
+
+  document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('bridge-js-click')) {
+      handleRedirect(e);
+    }
+  });
+
+  const observer = new MutationObserver(function() {
+    injectDrawerButton();
+    // 假如是单页应用切换路由，再次检查是否需要注入 CSS
+    injectHidingStyles(); 
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+  
+  // 初始运行
+  injectDrawerButton();
+
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Bridge Pay Button",
+  "target": "section",
+  "settings": [
+    { "type": "text", "id": "btn_text", "label": "Button Text", "default": "SECURE CHECKOUT (WORLDPAY)" },
+    { "type": "color", "id": "btn_color", "label": "Button Color", "default": "#000000" },
+    { "type": "checkbox", "id": "hide_native", "label": "Hide Native Checkout Button", "default": false },
+    { "type": "checkbox", "id": "show_at_position", "label": "Show Button at this location", "default": true }
+  ]
+}
+{% endschema %}
