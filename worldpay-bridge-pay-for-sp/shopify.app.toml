@@ -22,7 +22,7 @@ api_version = "2026-04"
   uri = "/webhooks/app/uninstalled"
 
 [access_scopes]
-scopes = "write_products,write_orders"
+scopes = "write_products,write_orders,read_orders"
 
 [auth]
 # 2. 这里的白名单必须包含所有可能发起的跳转地址
