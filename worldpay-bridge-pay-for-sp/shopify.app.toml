@@ -2,7 +2,7 @@
 
 client_id = "569de84beaea4dfa1eded757259a2385"
 name = "worldpay-bridge-pay-for-sp"
-application_url = "https://safe-paygate.defitopay.com"
+application_url = "https://test-safe-paygate.defitopay.com"
 embedded = true
 
 [build]
@@ -28,14 +28,14 @@ scopes = "write_products,write_orders,read_orders"
 # 2. 这里的白名单必须包含所有可能发起的跳转地址
 # 重点：必须把 test-pay.defitopay.com 相关的都加上！正式环境发布的时候，还需要修改的
 redirect_urls = [ 
-  "https://safe-paygate.defitopay.com/auth/callback",
-  "https://safe-paygate.defitopay.com/api/auth/callback",
+  "https://test-safe-paygate.defitopay.com/auth/callback",
+  "https://test-safe-paygate.defitopay.com/api/auth/callback",
   "https://test-pay.defitopay.com/auth",
   "https://test-pay.defitopay.com/auth/callback",
   "https://test-pay.defitopay.com/api/auth/callback"
 ]
 
 [app_proxy]
-url = "https://safe-paygate.defitopay.com/index.html"
+url = "https://test-safe-paygate.defitopay.com/index.html"
 subpath = "safe-pay"
 prefix = "apps"
