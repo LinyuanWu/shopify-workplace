@@ -98,84 +98,84 @@
     button#submit-btn:hover { background: #3a6346; }
     button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-    /* === 移动端适配 (核心优化) === */
+    /* === 遮罩效果 CSS (新增注入) === */
+    #wcr-a-payment-loader {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 10000000;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(3px);
+    }
+    .wcr-a-loader-content {
+        background: #ffffff;
+        padding: 30px 40px;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 90%;
+        width: 340px;
+        text-align: center;
+    }
+    .wcr-a-spinner {
+        width: 40px; height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #2ecc71;
+        border-radius: 50%;
+        animation: wcr-a-spin 0.8s linear infinite;
+        margin-bottom: 20px;
+    }
+    .wcr-a-text {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 16px;
+        color: #333;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+    @keyframes wcr-a-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* === 移动端适配 === */
     @media (max-width: 900px) {
       .main-container { flex-direction: column-reverse; } 
-      
       .form-section { padding: 20px; border-right: none; }
-      
-      /* === 核心修改：吸顶效果 === */
       .summary-section { 
-        padding: 0; 
-        background: #fafafa; 
-        border-left: none; 
-        width: 100%;
-        
-        /* 关键 CSS：让它吸附在顶部 */
-        position: sticky; 
-        top: 0; 
-        z-index: 999; /* 保证在表单之上 */
-        
-        /* 加一个阴影，让它吸顶时看起来像浮在上面 */
+        padding: 0; background: #fafafa; border-left: none; width: 100%;
+        position: sticky; top: 0; z-index: 999;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
       }
-
       .mobile-summary-toggle { display: flex; }
-
       .summary-content { 
-        display: none; 
-        padding: 20px; 
-        border-bottom: 1px solid #e1e1e1;
-        /* 关键 CSS：防止展开太长遮住屏幕，允许内部滚动 */
-        max-height: 60vh;
-        overflow-y: auto;
+        display: none; padding: 20px; border-bottom: 1px solid #e1e1e1;
+        max-height: 60vh; overflow-y: auto;
       }
-      
       .summary-content.show { display: block; animation: slideDown 0.3s ease-out; }
-
       @keyframes slideDown {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
       }
     }
 
-    /* === 信任徽章 (Trust Badges) === */
     .trust-badges {
-      display: flex;
-      justify-content: center; /* 居中排列 */
-      align-items: center;
-      gap: 25px; /* 图片之间的间距 */
-      margin-top: 20px; /* 距离上方按钮的距离 */
-      margin-bottom: 10px;
+      display: flex; justify-content: center; align-items: center; gap: 25px;
+      margin-top: 20px; margin-bottom: 10px;
     }
-    
-    .trust-badges img {
-      height: 40px; /* 限制高度，保持统一 */
-      width: auto;
-      object-fit: contain;
-      opacity: 0.9; /* 稍微降低一点点透明度，让它看起来不那么刺眼 */
-      transition: opacity 0.2s;
-    }
-    
-    .trust-badges img:hover {
-      opacity: 1;
-    }
-    
-    /* 移动端微调 */
-    @media (max-width: 480px) {
-      .trust-badges img {
-        height: 32px; /* 手机上稍微缩小一点 */
-      }
-    }
+    .trust-badges img { height: 40px; width: auto; object-fit: contain; opacity: 0.9; transition: opacity 0.2s; }
+    .trust-badges img:hover { opacity: 1; }
+    @media (max-width: 480px) { .trust-badges img { height: 32px; } }
   </style>
 </head>
 <body>
 
 <div class="main-container">
-  
-  <!-- 左侧（移动端下方）：输入表单 -->
+  <!-- 左侧输入表单 -->
   <div class="form-section">
-
     <form id="payment-form">
       <div class="section-title">Contact</div>
       <div class="input-box">
@@ -239,48 +239,32 @@
 
       <button type="submit" id="submit-btn">PLACE ORDER</button>
 
-      <!-- 新增的信任图标 -->
       <div class="trust-badges">
         <img src="https://image.defitopay.com/worldgate.svg" alt="Secured by WorldGate">
         <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS Compliant">
       </div>
 
-      <!-- 底部版权声明 -->
       <div style="margin-top:12px; text-align: center; font-weight: bold; font-size: 11px; color:#bbb; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
           Copyright 2026 Worldpay LLC, and its affiliates.
       </div>
-      
     </form>
-    
   </div>
 
-  <!-- 右侧（移动端顶部）：订单摘要 -->
+  <!-- 右侧订单摘要 -->
   <div class="summary-section">
-    <!-- 移动端：折叠控制条 -->
     <div class="mobile-summary-toggle" id="summaryToggle">
       <div class="toggle-left">
-        <svg viewBox="0 0 20 20" class="order-summary-toggle__icon">
-          <path d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z"></path>
-        </svg>
+        <svg viewBox="0 0 20 20"><path d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z"></path></svg>
         <span id="toggleText">Show order summary</span>
-        <svg class="toggle-chevron" viewBox="0 0 10 7" style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px;">
-           <path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <svg class="toggle-chevron" viewBox="0 0 10 7" style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px;"><path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <div class="toggle-total" id="mobile-total-display">$0.00</div>
     </div>
 
     <div class="summary-content" id="summaryContent">
       <div id="product-list" class="product-list"></div>
-
-      <div class="summary-line">
-        <span>Subtotal</span>
-        <span id="subtotal-val">0.00</span>
-      </div>
-      <div class="summary-line">
-        <span>Shipping</span>
-        <span id="shipping-display">Calculated at next step</span>
-      </div>
+      <div class="summary-line"><span>Subtotal</span><span id="subtotal-val">0.00</span></div>
+      <div class="summary-line"><span>Shipping</span><span id="shipping-display">Calculated at next step</span></div>
       <div class="total-line">
         <span class="total-label">Total</span>
         <div style="display:flex; align-items:baseline;">
@@ -292,73 +276,65 @@
   </div>
 </div>
 
+<!-- 遮罩层 HTML (新增注入) -->
+<div id="wcr-a-payment-loader">
+    <div class="wcr-a-loader-content">
+        <div class="wcr-a-spinner"></div>
+        <div class="wcr-a-text">
+            <div class="main-msg">Securely launching payment</div>
+            <div class="sub-msg" style="font-size: 14px; color: #666; font-weight: normal;">
+                Please do not exit or close this window
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+  // ==========================================
+  // 遮罩控制逻辑 (新增注入)
+  // ==========================================
+  function showWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'flex'; }
+  function hideWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'none'; }
+
   // ==========================================
   // 配置区域
   // ==========================================
-  
-  // 统一定义 Shopify 官方结账选项
   const shopifyOption = { 
     id: 'shopify_checkout', 
     name: 'Shopify Secure Checkout', 
-    icon: 'https://cdn.shopify.com/s/files/1/0000/0001/files/shopify_icon.png?v=1680000000' // 使用官方 CDN 或任何你想要的图标
+    icon: 'https://image.defitopay.com/global_pay.svg' 
   };
 
   const currencyPaymentMap = {
-    'USD': [
-      { id: 'credit_card', name: 'Credit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
-      { id: 'paypal', name: 'PayPal', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg' },
-      shopifyOption // 放在最后
-    ],
+    'USD': [shopifyOption],
     'JPY': [
       { id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' },
       { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' },
-      { id: 'konbini', name: 'Konbini', icon: 'https://image.defitopay.com/konbini.svg' },
-      shopifyOption // 放在最后
+      shopifyOption
     ],
     'KRW': [
       { id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' },
       { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' },
       { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' },
       { id: 'payco', name: 'Naver Pay', icon: 'https://image.defitopay.com/payco.png' },
-      shopifyOption // 放在最后
+      shopifyOption
     ],
     'TWD': [
       { id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' },
-      { id: 'linepay_tw', name: 'LINE Pay', icon: 'https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg' },
-      { id: 'credit_card', name: 'Credit Card / Debit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
-      shopifyOption // 放在最后
+      shopifyOption
     ],
-    'CNY': [
-      { id: 'alipaycn', name: '支付宝', icon: 'https://image.defitopay.com/alipaycn.png' },
-      { id: 'wechat', name: '微信支付', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/73/WeChat_logo.svg' },
-      shopifyOption // 放在最后
-    ],
-    'DEFAULT': [
-      { id: 'credit_card', name: 'Credit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
-      { id: 'paypal', name: 'PayPal', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg' },
-      shopifyOption // 放在最后
-    ]
+    'CNY': [shopifyOption],
+    'DEFAULT': [shopifyOption]
   };
 
-
   const allCountries = [
-    { code: "US", name: "United States" },
-    { code: "JP", name: "Japan" },
-    { code: "KR", name: "South Korea" },
-    { code: "TW", name: "Taiwan" },
-    { code: "HK", name: "Hong Kong" },
-    { code: "SG", name: "Singapore" },
-    { code: "MY", name: "Malaysia" },
-    { code: "GB", name: "United Kingdom" },
-    { code: "CA", name: "Canada" },
-    { code: "AU", name: "Australia" }
+    { code: "US", name: "United States" }, { code: "JP", name: "Japan" },
+    { code: "KR", name: "South Korea" }, { code: "TW", name: "Taiwan" },
+    { code: "HK", name: "Hong Kong" }, { code: "SG", name: "Singapore" },
+    { code: "MY", name: "Malaysia" }, { code: "GB", name: "United Kingdom" },
+    { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }
   ];
 
-  // ==========================================
-  // 逻辑代码
-  // ==========================================
-  
   let currentCart = null;
   let availableShippingRates = [];
   let selectedShippingRate = null;
@@ -368,24 +344,19 @@
     select.innerHTML = '<option value="" disabled selected>Select Country/Region</option>'; 
     allCountries.forEach(c => {
       const option = document.createElement('option');
-      option.value = c.code;
-      option.innerText = c.name;
-      select.appendChild(option);
+      option.value = c.code; option.innerText = c.name; select.appendChild(option);
     });
   }
 
   function renderPaymentMethods(currency) {
     const container = document.getElementById('payment-container');
     const methods = currencyPaymentMap[currency] || currencyPaymentMap['DEFAULT'];
-    
     let html = '';
     methods.forEach((m, index) => {
       const isChecked = index === 0;
-      const selectedClass = isChecked ? 'selected' : '';
       if(isChecked) document.getElementById('gateway').value = m.id;
-
       html += `
-        <label class="payment-option ${selectedClass}" onclick="selectPayment(this, '${m.id}')">
+        <label class="payment-option ${isChecked ? 'selected' : ''}" onclick="selectPayment(this, '${m.id}')">
           <input type="radio" name="payment_method_radio" ${isChecked ? 'checked' : ''}>
           <div class="payment-name">${m.name}</div>
           <img src="${m.icon}" alt="${m.name}" class="payment-icon">
@@ -398,12 +369,10 @@
   window.selectPayment = function(el, gatewayId) {
     document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
     el.classList.add('selected');
-    const radio = el.querySelector('input[type="radio"]');
-    if(radio) radio.checked = true;
+    el.querySelector('input').checked = true;
     document.getElementById('gateway').value = gatewayId;
   };
 
-  // 折叠菜单逻辑
   const summaryToggle = document.getElementById('summaryToggle');
   const summaryContent = document.getElementById('summaryContent');
   const toggleText = document.getElementById('toggleText');
@@ -411,28 +380,19 @@
   summaryToggle.addEventListener('click', () => {
     summaryContent.classList.toggle('show');
     summaryToggle.classList.toggle('expanded');
-    
-    if (summaryContent.classList.contains('show')) {
-      toggleText.innerText = "Hide order summary";
-    } else {
-      toggleText.innerText = "Show order summary";
-    }
+    toggleText.innerText = summaryContent.classList.contains('show') ? "Hide order summary" : "Show order summary";
   });
-
 
   async function loadCartData() {
     try {
       const res = await fetch('/cart.js');
       currentCart = await res.json();
-      
       let html = '';
       currentCart.items.forEach(item => {
         html += `
           <div class="product-item">
             <div class="product-img-wrapper">
-              <div class="product-img">
-                <img src="${item.image}" alt="${item.title}">
-              </div>
+              <div class="product-img"><img src="${item.image}"></div>
               <div class="product-qty-badge">${item.quantity}</div>
             </div>
             <div class="product-info">
@@ -445,40 +405,30 @@
       });
       document.getElementById('product-list').innerHTML = html;
       document.getElementById('currency-tag').innerText = currentCart.currency;
-      
       renderPaymentMethods(currentCart.currency);
       updateTotalDisplay();
-
-    } catch (err) {
-      document.getElementById('product-list').innerHTML = "Failed to load order data.";
-    }
+    } catch (err) { document.getElementById('product-list').innerHTML = "Failed to load order data."; }
   }
 
   async function fetchShippingRates() {
     const country = document.getElementById('country').value;
     const province = document.getElementById('state').value;
     const zip = document.getElementById('zip').value;
-
     if (!zip || zip.length < 3 || !country) return;
-
     const listDiv = document.getElementById('shipping-rates-list');
     document.getElementById('shipping-method-area').style.display = 'block';
     listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Calculating rates...</div>";
-
     try {
       const res = await fetch(`/cart/shipping_rates.json?shipping_address[zip]=${zip}&shipping_address[country]=${country}&shipping_address[province]=${province}`);
       const data = await res.json();
-      
       availableShippingRates = data.shipping_rates;
       if (availableShippingRates && availableShippingRates.length > 0) {
         let html = '';
         availableShippingRates.forEach((rate, index) => {
-          const isSelected = index === 0;
-          if(isSelected) selectedShippingRate = rate;
-
+          if(index === 0) selectedShippingRate = rate;
           html += `
-            <div class="shipping-method-item ${isSelected ? 'selected' : ''}" id="ship-box-${index}" onclick="selectShipping(${index})">
-              <input type="radio" name="s_rate" id="r-${index}" value="${index}" ${isSelected ? 'checked' : ''}>
+            <div class="shipping-method-item ${index === 0 ? 'selected' : ''}" id="ship-box-${index}" onclick="selectShipping(${index})">
+              <input type="radio" name="s_rate" id="r-${index}" ${index === 0 ? 'checked' : ''}>
               <div style="flex:1;">${rate.name}</div>
               <div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div>
             </div>
@@ -486,12 +436,8 @@
         });
         listDiv.innerHTML = html;
         updateTotalDisplay();
-      } else {
-        listDiv.innerHTML = "<div style='padding:10px; color:red;'>No shipping options found.</div>";
-      }
-    } catch (err) {
-      listDiv.innerHTML = "<div style='padding:10px;'>Error fetching rates.</div>";
-    }
+      } else { listDiv.innerHTML = "<div style='padding:10px; color:red;'>No shipping options found.</div>"; }
+    } catch (err) { listDiv.innerHTML = "<div style='padding:10px;'>Error fetching rates.</div>"; }
   }
 
   window.selectShipping = function(index) {
@@ -505,15 +451,9 @@
   function updateTotalDisplay() {
     if (!currentCart) return;
     const subtotal = currentCart.total_price / 100;
-    
-    let shippingPrice = 0;
-    if (selectedShippingRate) {
-      shippingPrice = parseFloat(selectedShippingRate.price);
-      document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
-    }
-
+    let shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+    if (selectedShippingRate) document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
     const finalTotal = subtotal + shippingPrice;
-    
     document.getElementById('subtotal-val').innerText = subtotal.toFixed(2) + " " + currentCart.currency;
     document.getElementById('total-val').innerText = finalTotal.toFixed(2);
     document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
@@ -522,67 +462,41 @@
 
   initCountries();
   loadCartData();
-  
-  ['zip', 'state', 'country'].forEach(id => {
-    document.getElementById(id).addEventListener('change', fetchShippingRates);
-  });
+  ['zip', 'state', 'country'].forEach(id => document.getElementById(id).addEventListener('change', fetchShippingRates));
 
-  // ============================================================
-  // 表单提交核心逻辑 (包含 Shopify 跳转拦截)
-  // ============================================================
+  // ==========================================
+  // 表单提交核心逻辑 (带遮罩触发)
+  // ==========================================
   document.getElementById('payment-form').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('submit-btn');
     const gatewayVal = document.getElementById('gateway').value;
+    if(!gatewayVal) { alert("Please select a payment method."); return; }
 
-    if(!gatewayVal) {
-      alert("Please select a payment method.");
-      return;
-    }
+    // 触发遮罩
+    showWcrLoading();
 
-    // ------------------------------------------------
-    // 1. 如果选择了 Shopify 原生结账 -> 执行回填并跳转
-    // ------------------------------------------------
+    // 1. Shopify 原生跳转
     if (gatewayVal === 'shopify_checkout') {
-      btn.innerText = "Redirecting to Checkout...";
-      btn.disabled = true;
-
-      // 获取用户填写的收货信息
-      const email = document.getElementById('email').value;
-      const firstName = document.getElementById('fname').value;
-      const lastName = document.getElementById('lname').value;
-      const address1 = document.getElementById('address').value;
-      const city = document.getElementById('city').value;
-      const country = document.getElementById('country').value;
-      const province = document.getElementById('state').value;
-      const zip = document.getElementById('zip').value;
-      const phone = document.getElementById('phone').value;
-
-      // 构造 Shopify 预填充参数
       const params = new URLSearchParams();
-      if(email) params.append('checkout[email]', email);
-      if(firstName) params.append('checkout[shipping_address][first_name]', firstName);
-      if(lastName) params.append('checkout[shipping_address][last_name]', lastName);
-      if(address1) params.append('checkout[shipping_address][address1]', address1);
-      if(city) params.append('checkout[shipping_address][city]', city);
-      if(country) params.append('checkout[shipping_address][country]', country);
-      if(province) params.append('checkout[shipping_address][province]', province);
-      if(zip) params.append('checkout[shipping_address][zip]', zip);
-      if(phone) params.append('checkout[shipping_address][phone]', phone);
-
-      // 直接跳转到 /checkout，Shopify 会自动处理购物车内容和地址回填
+      const fields = {
+        'checkout[email]': 'email',
+        'checkout[shipping_address][first_name]': 'fname',
+        'checkout[shipping_address][last_name]': 'lname',
+        'checkout[shipping_address][address1]': 'address',
+        'checkout[shipping_address][city]': 'city',
+        'checkout[shipping_address][country]': 'country',
+        'checkout[shipping_address][province]': 'state',
+        'checkout[shipping_address][zip]': 'zip',
+        'checkout[shipping_address][phone]': 'phone'
+      };
+      for (let key in fields) { params.append(key, document.getElementById(fields[key]).value); }
       window.top.location.href = '/checkout?' + params.toString();
-      
-      // 结束执行，不发 API 请求
       return; 
     }
 
-    // ------------------------------------------------
-    // 2. 如果选择了其他支付方式 -> 走原有的 API 流程
-    // ------------------------------------------------
-    btn.innerText = "Processing...";
+    // 2. 外部 API 流程
     btn.disabled = true;
-
     const payload = {
       order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'),
       total_amount: window.finalPayAmount,
@@ -592,26 +506,15 @@
       return_url: window.location.origin + "/pages/thank-you",
       hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", 
       line_items: currentCart.items.map(item => ({
-        variant_id: item.variant_id,
-        quantity: item.quantity,
-        title: item.title,
-        price: (item.price / 100).toFixed(2)
+        variant_id: item.variant_id, quantity: item.quantity, title: item.title, price: (item.price / 100).toFixed(2)
       })),
-      shipping_lines: selectedShippingRate ? [{
-        title: selectedShippingRate.name,
-        price: selectedShippingRate.price
-      }] : [],
+      shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [],
       billing: {
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        first_name: document.getElementById('fname').value,
-        last_name: document.getElementById('lname').value,
-        address1: document.getElementById('address').value,
-        city: document.getElementById('city').value,
-        state: document.getElementById('state').value,
-        postcode: document.getElementById('zip').value,
-        country: document.getElementById('country').value,
-        province: document.getElementById('state').value,
+        email: document.getElementById('email').value, phone: document.getElementById('phone').value,
+        first_name: document.getElementById('fname').value, last_name: document.getElementById('lname').value,
+        address1: document.getElementById('address').value, city: document.getElementById('city').value,
+        state: document.getElementById('state').value, postcode: document.getElementById('zip').value,
+        country: document.getElementById('country').value, province: document.getElementById('state').value,
         zip: document.getElementById('zip').value
       }
     };
@@ -627,20 +530,10 @@
         },
         body: JSON.stringify(payload)
       });
-
       const result = await response.json();
-      if (result.pay_url) {
-        window.top.location.href = result.pay_url;
-      } else {
-        alert("Error: " + result.message);
-        btn.disabled = false;
-        btn.innerText = "PLACE ORDER";
-      }
-    } catch (err) {
-      alert("System Error.");
-      btn.disabled = false;
-      btn.innerText = "PLACE ORDER";
-    }
+      if (result.pay_url) { window.top.location.href = result.pay_url; } 
+      else { hideWcrLoading(); alert("Error: " + result.message); btn.disabled = false; }
+    } catch (err) { hideWcrLoading(); alert("System Error."); btn.disabled = false; }
   };
 </script>
 </body>
