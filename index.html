@@ -126,7 +126,7 @@
         border: 3px solid #f3f3f3;
         border-top: 3px solid #2ecc71;
         border-radius: 50%;
-        animation: wcr-a-spin 0.8s linear infinite;
+        animation: wcr-a-spin 0.3s linear infinite;
         margin-bottom: 20px;
     }
     .wcr-a-text {
@@ -306,25 +306,40 @@
   };
 
   const currencyPaymentMap = {
-    'USD': [shopifyOption],
+    'USD': [
+      //{ id: 'credit_card', name: 'Credit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
+      //{ id: 'paypal', name: 'PayPal', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg' },
+      shopifyOption // 放在最后
+    ],
     'JPY': [
       { id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' },
       { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' },
-      shopifyOption
+      //{ id: 'konbini', name: 'Konbini', icon: 'https://image.defitopay.com/konbini.svg' },
+      shopifyOption // 放在最后
     ],
     'KRW': [
       { id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' },
       { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' },
       { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' },
       { id: 'payco', name: 'Naver Pay', icon: 'https://image.defitopay.com/payco.png' },
-      shopifyOption
+      shopifyOption // 放在最后
     ],
     'TWD': [
       { id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' },
-      shopifyOption
+      //{ id: 'linepay_tw', name: 'LINE Pay', icon: 'https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg' },
+      //{ id: 'credit_card', name: 'Credit Card / Debit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
+      shopifyOption // 放在最后
     ],
-    'CNY': [shopifyOption],
-    'DEFAULT': [shopifyOption]
+    'CNY': [
+      //{ id: 'alipaycn', name: '支付宝', icon: 'https://image.defitopay.com/alipaycn.png' },
+      //{ id: 'wechat', name: '微信支付', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/73/WeChat_logo.svg' },
+      shopifyOption // 放在最后
+    ],
+    'DEFAULT': [
+      //{ id: 'credit_card', name: 'Credit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
+      //{ id: 'paypal', name: 'PayPal', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg' },
+      shopifyOption // 放在最后
+    ]
   };
 
   const allCountries = [
