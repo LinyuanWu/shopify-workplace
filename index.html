@@ -555,7 +555,7 @@
 // 隐藏 KEY 信息
 try {
       // 1. 请求你自己的后端中转接口（不再暴露真实网关地址）
-      const response = await fetch('/api/checkout', { 
+      const response = await fetch('/api_key', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

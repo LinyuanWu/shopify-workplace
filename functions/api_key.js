@@ -7,8 +7,8 @@ export async function onRequestPost(context) {
         const payload = await request.json();
 
         // 2. 从 Pages 的环境变量中读取 Secret Key
-        const pubKey = env.WORLDPAY_PUBLIC_KEY;
-        const secKey = env.CUS_SECRET_KEY;
+        const pubKey = env.worldpay_public_key;
+        const secKey = env.cus_secret_key;
 
         // 3. 在后端发起真正的支付请求
         const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', {
