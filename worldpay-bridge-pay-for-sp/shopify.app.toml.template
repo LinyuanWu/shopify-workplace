@@ -1,7 +1,14 @@
+
+# 客户信息
+#client_id = "762da8f0649e04d7109426ed60ec6011"  name = "worldpay-gate-test-anttk"
+
+#client_id = "569de84beaea4dfa1eded757259a2385"   name = "worldpay-bridge-pay-for-sp"
+
+
 # shopify.app.toml
 
-client_id = "4c37d3f906693570b25ea1a942208dbf"
-name = "worldpay-gate-test-tr81k6"
+client_id = "569de84beaea4dfa1eded757259a2385"
+name = "worldpay-bridge-pay-for-sp"
 application_url = "https://test-safe-paygate.defitopay.com"
 embedded = true
 
