@@ -534,7 +534,9 @@
       }
     };
 
+/*
     try {
+
       const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', {
         method: 'POST',
         headers: {
@@ -548,7 +550,38 @@
       const result = await response.json();
       if (result.pay_url) { window.top.location.href = result.pay_url; } 
       else { hideWcrLoading(); alert("Error: " + result.message); btn.disabled = false; }
-    } catch (err) { hideWcrLoading(); alert("System Error."); btn.disabled = false; }
+    }catch (err) { hideWcrLoading(); alert("System Error."); btn.disabled = false; }
+*/
+// 隐藏 KEY 信息
+try {
+      // 1. 请求你自己的后端中转接口（不再暴露真实网关地址）
+      const response = await fetch('/api/checkout', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        // payload 里的订单数据照样传，但 headers 里的“钥匙”不再传了
+        body: JSON.stringify(payload) 
+      });
+
+      const result = await response.json();
+
+      if (result.pay_url) { 
+        // 成功获取到支付链接，执行跳转
+        window.top.location.href = result.pay_url; 
+      } else { 
+        // 出错处理
+        hideWcrLoading(); 
+        alert("Payment Error: " + (result.message || "Unknown error")); 
+        btn.disabled = false; 
+      }
+    } catch (err) {
+      // 网络或其他异常处理
+      hideWcrLoading(); 
+      alert("System Error. Please try again later."); 
+      btn.disabled = false; 
+    }
+
   };
 </script>
 </body>
