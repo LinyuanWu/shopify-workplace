@@ -1,6 +1,67 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+
+<script type="text/javascript">
+(function() {
+    // 1. 基础交互拦截：禁止右键菜单、禁止文字选择、禁止保存、禁止查看源码
+    document.addEventListener('contextmenu', e => e.preventDefault()); 
+    document.addEventListener('selectstart', e => e.preventDefault()); 
+    document.addEventListener('copy', e => e.preventDefault());        
+
+    document.onkeydown = function(e) {
+        // 屏蔽 F12, Ctrl+Shift+I (控制台), Ctrl+Shift+J (控制台), Ctrl+U (查看源码), Ctrl+S (保存)
+        if (
+            e.keyCode === 123 || 
+            (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+            (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) ||
+            (e.metaKey && (e.keyCode === 85 || e.keyCode === 83)) // 适配 Mac
+        ) {
+            return false;
+        }
+    };
+
+    // 2. 核心检测：一旦打开开发者工具则触发白屏或跳转
+    function killPage() {
+        document.body.innerHTML = ""; // 立即清空内容（白屏）
+        window.location.replace('about:blank');
+    }
+
+    function detectDevTools() {
+        // A. 窗口尺寸差检测（排除真实手机端，因为手机端 innerWidth 较小）
+        const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+        if (!isRealMobile) {
+            const threshold = 160;
+            const widthDiff = window.outerWidth - window.innerWidth > threshold;
+            const heightDiff = window.outerHeight - window.innerHeight > threshold;
+            
+            if (widthDiff || heightDiff) {
+                killPage();
+                return true;
+            }
+        }
+
+        // B. Debugger 延迟检测
+        // 如果调试器已打开，debugger 语句会导致 JS 暂停运行，产生时间差
+        const start = performance.now();
+        debugger; 
+        const end = performance.now();
+        if (end - start > 50) {
+            killPage();
+            return true;
+        }
+        return false;
+    }
+
+    // 每一秒检测一次调试器状态
+    setInterval(detectDevTools, 1000);
+    window.addEventListener('resize', detectDevTools);
+    window.addEventListener('load', detectDevTools);
+})();
+</script>
+
+
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Checkout - Secure Payment Gateway</title>
@@ -543,8 +604,8 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          //'worldpay_public_key': 'MIIBIjANBgkqhkiG9w0BAQEFDDFQ8AMIIBCgKCAQEAoDOXmpSAYzSDF3Ju+aEHZmRRvNWD6CCCwuULQmdGJgoJjWWxbmaA',
-          //'cus_secret_key': 'MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDH/z2Jtjdc47LBmuxRKNhllCPAFlpB4HhinEy0TgEKTeBZ+6qVBk2c1hbjUaXQwdgDwQ4S0J',
+          //'worldpay_public_key': 'api_key.js ',
+          //'cus_secret_key': 'api_key.js',
           'worldpay_public_key': atob(_p),
           'cus_secret_key': atob(_s),
           'X-Customer-Language': navigator.language

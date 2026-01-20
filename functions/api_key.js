@@ -54,3 +54,7 @@ export async function onRequest(context) {
         });
     }
 }
+
+//存档秘钥
+//'worldpay_public_key': 'MIIBIjANBgkqhkiG9w0BAQEFDDFQ8AMIIBCgKCAQEAoDOXmpSAYzSDF3Ju+aEHZmRRvNWD6CCCwuULQmdGJgoJjWWxbmaA',
+//'cus_secret_key': 'MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDH/z2Jtjdc47LBmuxRKNhllCPAFlpB4HhinEy0TgEKTeBZ+6qVBk2c1hbjUaXQwdgDwQ4S0J',
