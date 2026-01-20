@@ -534,8 +534,8 @@
       }
     };
     //Base64 编码和 atob 解码
-    const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
-    const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
+    //const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
+    //const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
 
     try {
 
@@ -543,10 +543,10 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          //'worldpay_public_key': 'MIIBIjANBgkqhkiG9w0BAQEFDDFQ8AMIIBCgKCAQEAoDOXmpSAYzSDF3Ju+aEHZmRRvNWD6CCCwuULQmdGJgoJjWWxbmaA',
-          //'cus_secret_key': 'MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDH/z2Jtjdc47LBmuxRKNhllCPAFlpB4HhinEy0TgEKTeBZ+6qVBk2c1hbjUaXQwdgDwQ4S0J',
-          'worldpay_public_key': atob(_p),
-          'cus_secret_key': atob(_s),
+          'worldpay_public_key': 'MIIBIjANBgkqhkiG9w0BAQEFDDFQ8AMIIBCgKCAQEAoDOXmpSAYzSDF3Ju+aEHZmRRvNWD6CCCwuULQmdGJgoJjWWxbmaA',
+          'cus_secret_key': 'MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDH/z2Jtjdc47LBmuxRKNhllCPAFlpB4HhinEy0TgEKTeBZ+6qVBk2c1hbjUaXQwdgDwQ4S0J',
+          //'worldpay_public_key': atob(_p),
+          //'cus_secret_key': atob(_s),
           'X-Customer-Language': navigator.language
         },
         body: JSON.stringify(payload)
