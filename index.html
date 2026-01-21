@@ -3,43 +3,7 @@
 
 <head>
   <!-- 安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
-  <script type="text/javascript">
-    (function () {
-      document.addEventListener('contextmenu', e => e.preventDefault());
-      document.addEventListener('selectstart', e => e.preventDefault());
-      document.addEventListener('copy', e => e.preventDefault());
 
-      document.onkeydown = function (e) {
-        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) ||
-          (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || (e.metaKey && (e.keyCode === 85 || e.keyCode === 83))) {
-          return false;
-        }
-      };
-
-      function killPage() {
-        document.body.innerHTML = "";
-        window.location.replace('about:blank');
-      }
-
-      function detectDevTools() {
-        const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
-        if (!isRealMobile) {
-          const threshold = 160;
-          const widthDiff = window.outerWidth - window.innerWidth > threshold;
-          const heightDiff = window.outerHeight - window.innerHeight > threshold;
-          if (widthDiff || heightDiff) { killPage(); return true; }
-        }
-        const start = performance.now();
-        debugger;
-        const end = performance.now();
-        if (end - start > 50) { killPage(); return true; }
-        return false;
-      }
-      setInterval(detectDevTools, 1000);
-      window.addEventListener('resize', detectDevTools);
-      window.addEventListener('load', detectDevTools);
-    })();
-  </script>
   <!-- 结束安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
@@ -706,29 +670,72 @@
     // ==========================================
     // 多语言核心逻辑 (新增加)
     // ==========================================
+// ==========================================
+    // 增强版多语言核心逻辑 (带调试日志)
+    // ==========================================
     async function applyLanguage(lang) {
-      try {
-        const res = await fetch(`/translate/${lang}.json`);
-        if (!res.ok) return;
-        const trans = await res.json();
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-          const key = el.getAttribute('data-i18n');
-          if (trans[key]) el.textContent = trans[key];
-        });
-        // 更新 Placeholders
-        if (trans.placeholder_email) document.getElementById('email').placeholder = trans.placeholder_email;
-        if (trans.placeholder_address) document.getElementById('address').placeholder = trans.placeholder_address;
-        if (trans.placeholder_phone) document.getElementById('phone').placeholder = trans.placeholder_phone;
+      // 1. 确定语言代码 (转换大小写以防匹配失败)
+      // 如果你的文件名是 zh-TW.json，这里的 lang 必须严格对应
+      console.log(`[i18n] 正在尝试切换语言至: ${lang}`);
 
-        // 同步选择器状态
-        document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
+      try {
+        // 添加时间戳防止 Cloudflare 缓存旧文件
+        const cacheBuster = new Date().getTime();
+        const url = `/translate/${lang}.json?v=${cacheBuster}`;
+        
+        console.log(`[i18n] 正在请求文件: ${url}`);
+
+        const res = await fetch(url);
+
+        // 2. 检查响应状态
+        if (!res.ok) {
+          console.error(`[i18n] 加载失败！状态码: ${res.status}。请检查文件是否存在于: /translate/${lang}.json`);
+          // 如果 404，说明路径或文件名大小写有问题
+          return;
+        }
+
+        const trans = await res.json();
+        console.log(`[i18n] 成功获取翻译数据:`, trans);
+
+        // 3. 翻译带有 data-i18n 属性的文本
+        const elements = document.querySelectorAll('[data-i18n]');
+        console.log(`[i18n] 找到待翻译元素数量: ${elements.length}`);
+        
+        elements.forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (trans[key]) {
+            el.textContent = trans[key];
+          } else {
+            console.warn(`[i18n] 翻译字典中缺失键名: "${key}"`);
+          }
+        });
+
+        // 4. 更新 Placeholders (增加空值检查，防止代码崩溃)
+        const updatePlaceholder = (id, transKey) => {
+          const input = document.getElementById(id);
+          if (input && trans[transKey]) {
+            input.placeholder = trans[transKey];
+          }
+        };
+
+        updatePlaceholder('email', 'placeholder_email');
+        updatePlaceholder('address', 'placeholder_address');
+        updatePlaceholder('phone', 'placeholder_phone');
+
+        // 5. 同步所有语言选择器状态 (PC和移动端)
+        document.querySelectorAll('.lang-selector').forEach(s => {
+          s.value = lang;
+        });
+
+        // 6. 保存偏好
         localStorage.setItem('preferred_lang', lang);
-      } catch (e) { console.log('Lang Error'); }
+        console.log(`[i18n] 语言切换完成: ${lang}`);
+
+      } catch (e) {
+        console.error('[i18n] 发生严重错误:', e);
+      }
     }
 
-    document.querySelectorAll('.lang-selector').forEach(select => {
-      select.addEventListener('change', (e) => applyLanguage(e.target.value));
-    });
 
     // ==========================================
     // V56.0 原始功能逻辑 (保持不变)
