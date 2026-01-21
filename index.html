@@ -670,79 +670,67 @@
     // ==========================================
     // 多语言核心逻辑 (新增加)
     // ==========================================
-// ==========================================
-    // 增强版多语言核心逻辑 (带调试日志)
-    // ==========================================
-// 1. 核心翻译函数
     async function applyLanguage(lang) {
       const CLOUDFLARE_BASE_URL = 'https://shopify-workplace.pages.dev'; 
       
-      console.log(`[i18n] 尝试切换至: ${lang}`);
       try {
         const cacheBuster = new Date().getTime();
         const url = `${CLOUDFLARE_BASE_URL}/translate/${lang}.json?v=${cacheBuster}`;
         
         const res = await fetch(url);
-        if (!res.ok) {
-          console.error(`[i18n] 加载失败！状态码: ${res.status}`);
-          return;
-        }
+        if (!res.ok) return;
 
         const trans = await res.json();
-        console.log(`[i18n] 成功获取数据`, trans);
 
-        // 翻译文本
+        // 1. 翻译带有 data-i18n 属性的文本
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (trans[key]) el.textContent = trans[key];
         });
 
-        // 翻译 Placeholder
-        if (trans.placeholder_email) document.getElementById('email').placeholder = trans.placeholder_email;
-        if (trans.placeholder_address) document.getElementById('address').placeholder = trans.placeholder_address;
-        if (trans.placeholder_phone) document.getElementById('phone').placeholder = trans.placeholder_phone;
+        // 2. 翻译输入框提示 (Placeholder)
+        const placeholders = {
+          'email': 'placeholder_email',
+          'address': 'placeholder_address',
+          'phone': 'placeholder_phone'
+        };
+        for (let id in placeholders) {
+          const el = document.getElementById(id);
+          if (el && trans[placeholders[id]]) el.placeholder = trans[placeholders[id]];
+        }
 
-        // 【同步 UI】让所有语言选择器（手机端和PC端）都显示当前选中的值
-        document.querySelectorAll('.lang-selector').forEach(s => {
-          s.value = lang;
-        });
-
-        // 【保存选择】
+        // 3. 同步所有下拉选择器的状态并保存偏好
+        document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
         localStorage.setItem('preferred_lang', lang);
 
-      } catch (e) { 
-        console.error('[i18n] 发生异常:', e); 
+      } catch (e) {
+        // 生产环境仅保留必要的错误记录，不打印调试信息
+        console.error('i18n error');
       }
     }
 
     /**
-     * 2. 【新增】手动切换事件绑定
-     * 必须把这个绑定代码放出来，下拉框点击才有用
+     * 绑定下拉框切换事件
      */
     function bindLangEvents() {
-      const selectors = document.querySelectorAll('.lang-selector');
-      selectors.forEach(select => {
-        // 使用 onchange 确保每次手动选择都能触发
-        select.onchange = (e) => {
-          const newLang = e.target.value;
-          console.log(`[i18n] 手动切换语言为: ${newLang}`);
-          applyLanguage(newLang);
-        };
+      document.querySelectorAll('.lang-selector').forEach(select => {
+        select.onchange = (e) => applyLanguage(e.target.value);
       });
     }
 
-    // 3. 初始化加载
-    window.addEventListener('DOMContentLoaded', async () => {
-      // A. 先绑定手动点击事件
+    /**
+     * 页面加载初始化
+     */
+    window.addEventListener('DOMContentLoaded', () => {
       bindLangEvents();
 
-      // B. 自动识别逻辑
       const saved = localStorage.getItem('preferred_lang');
       const browser = navigator.language.split('-')[0];
+      
+      // 优先级：手动选择 > 浏览器识别 > 英语
       const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
       
-      console.log(`[i18n] 初始加载语言: ${target}`);
-      await applyLanguage(target);
+      applyLanguage(target);
     });
 
 
