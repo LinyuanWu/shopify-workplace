@@ -673,66 +673,40 @@
 // ==========================================
     // 增强版多语言核心逻辑 (带调试日志)
     // ==========================================
-    async function applyLanguage(lang) {
-      // 1. 确定语言代码 (转换大小写以防匹配失败)
-      // 如果你的文件名是 zh-TW.json，这里的 lang 必须严格对应
+async function applyLanguage(lang) {
+      // --- 关键修改：在这里填入你 Cloudflare Pages 的完整地址 ---
+      const CLOUDFLARE_BASE_URL = 'https://shopify-workplace.pages.dev'; 
+      
       console.log(`[i18n] 正在尝试切换语言至: ${lang}`);
-
       try {
-        // 添加时间戳防止 Cloudflare 缓存旧文件
         const cacheBuster = new Date().getTime();
-        const url = `/translate/${lang}.json?v=${cacheBuster}`;
+        // 使用绝对地址进行请求
+        const url = `${CLOUDFLARE_BASE_URL}/translate/${lang}.json?v=${cacheBuster}`;
         
         console.log(`[i18n] 正在请求文件: ${url}`);
 
         const res = await fetch(url);
-
-        // 2. 检查响应状态
         if (!res.ok) {
-          console.error(`[i18n] 加载失败！状态码: ${res.status}。请检查文件是否存在于: /translate/${lang}.json`);
-          // 如果 404，说明路径或文件名大小写有问题
+          console.error(`[i18n] 加载失败！状态码: ${res.status}。请确认 ${url} 是否能直接在浏览器打开。`);
           return;
         }
 
         const trans = await res.json();
-        console.log(`[i18n] 成功获取翻译数据:`, trans);
+        console.log(`[i18n] 成功获取数据`, trans);
 
-        // 3. 翻译带有 data-i18n 属性的文本
-        const elements = document.querySelectorAll('[data-i18n]');
-        console.log(`[i18n] 找到待翻译元素数量: ${elements.length}`);
-        
-        elements.forEach(el => {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
-          if (trans[key]) {
-            el.textContent = trans[key];
-          } else {
-            console.warn(`[i18n] 翻译字典中缺失键名: "${key}"`);
-          }
+          if (trans[key]) el.textContent = trans[key];
         });
 
-        // 4. 更新 Placeholders (增加空值检查，防止代码崩溃)
-        const updatePlaceholder = (id, transKey) => {
-          const input = document.getElementById(id);
-          if (input && trans[transKey]) {
-            input.placeholder = trans[transKey];
-          }
-        };
+        if (trans.placeholder_email) document.getElementById('email').placeholder = trans.placeholder_email;
+        if (trans.placeholder_address) document.getElementById('address').placeholder = trans.placeholder_address;
+        if (trans.placeholder_phone) document.getElementById('phone').placeholder = trans.placeholder_phone;
 
-        updatePlaceholder('email', 'placeholder_email');
-        updatePlaceholder('address', 'placeholder_address');
-        updatePlaceholder('phone', 'placeholder_phone');
-
-        // 5. 同步所有语言选择器状态 (PC和移动端)
-        document.querySelectorAll('.lang-selector').forEach(s => {
-          s.value = lang;
-        });
-
-        // 6. 保存偏好
+        document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
         localStorage.setItem('preferred_lang', lang);
-        console.log(`[i18n] 语言切换完成: ${lang}`);
-
-      } catch (e) {
-        console.error('[i18n] 发生严重错误:', e);
+      } catch (e) { 
+        console.error('[i18n] 发生异常:', e); 
       }
     }
 
