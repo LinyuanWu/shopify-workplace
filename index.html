@@ -673,42 +673,77 @@
 // ==========================================
     // 增强版多语言核心逻辑 (带调试日志)
     // ==========================================
-async function applyLanguage(lang) {
-      // --- 关键修改：在这里填入你 Cloudflare Pages 的完整地址 ---
+// 1. 核心翻译函数
+    async function applyLanguage(lang) {
       const CLOUDFLARE_BASE_URL = 'https://shopify-workplace.pages.dev'; 
       
-      console.log(`[i18n] 正在尝试切换语言至: ${lang}`);
+      console.log(`[i18n] 尝试切换至: ${lang}`);
       try {
         const cacheBuster = new Date().getTime();
-        // 使用绝对地址进行请求
         const url = `${CLOUDFLARE_BASE_URL}/translate/${lang}.json?v=${cacheBuster}`;
         
-        console.log(`[i18n] 正在请求文件: ${url}`);
-
         const res = await fetch(url);
         if (!res.ok) {
-          console.error(`[i18n] 加载失败！状态码: ${res.status}。请确认 ${url} 是否能直接在浏览器打开。`);
+          console.error(`[i18n] 加载失败！状态码: ${res.status}`);
           return;
         }
 
         const trans = await res.json();
         console.log(`[i18n] 成功获取数据`, trans);
 
+        // 翻译文本
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (trans[key]) el.textContent = trans[key];
         });
 
+        // 翻译 Placeholder
         if (trans.placeholder_email) document.getElementById('email').placeholder = trans.placeholder_email;
         if (trans.placeholder_address) document.getElementById('address').placeholder = trans.placeholder_address;
         if (trans.placeholder_phone) document.getElementById('phone').placeholder = trans.placeholder_phone;
 
-        document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
+        // 【同步 UI】让所有语言选择器（手机端和PC端）都显示当前选中的值
+        document.querySelectorAll('.lang-selector').forEach(s => {
+          s.value = lang;
+        });
+
+        // 【保存选择】
         localStorage.setItem('preferred_lang', lang);
+
       } catch (e) { 
         console.error('[i18n] 发生异常:', e); 
       }
     }
+
+    /**
+     * 2. 【新增】手动切换事件绑定
+     * 必须把这个绑定代码放出来，下拉框点击才有用
+     */
+    function bindLangEvents() {
+      const selectors = document.querySelectorAll('.lang-selector');
+      selectors.forEach(select => {
+        // 使用 onchange 确保每次手动选择都能触发
+        select.onchange = (e) => {
+          const newLang = e.target.value;
+          console.log(`[i18n] 手动切换语言为: ${newLang}`);
+          applyLanguage(newLang);
+        };
+      });
+    }
+
+    // 3. 初始化加载
+    window.addEventListener('DOMContentLoaded', async () => {
+      // A. 先绑定手动点击事件
+      bindLangEvents();
+
+      // B. 自动识别逻辑
+      const saved = localStorage.getItem('preferred_lang');
+      const browser = navigator.language.split('-')[0];
+      const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
+      
+      console.log(`[i18n] 初始加载语言: ${target}`);
+      await applyLanguage(target);
+    });
 
 
     // ==========================================
@@ -842,16 +877,7 @@ async function applyLanguage(lang) {
         else { hideWcrLoading(); alert("Error: " + result.message); btn.disabled = false; }
       } catch (err) { hideWcrLoading(); alert("System Error."); btn.disabled = false; }
     };
-
-    // 初始化语言
-    window.addEventListener('DOMContentLoaded', async () => {
-      // 1. 优先拿手动选过的，2. 没选过才看浏览器语言，3. 最后保底英语
-      const saved = localStorage.getItem('preferred_lang');
-      const browser = navigator.language.split('-')[0];
-      const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
-      
-      await applyLanguage(target);
-    });    
+   
   </script>
 </body>
 
