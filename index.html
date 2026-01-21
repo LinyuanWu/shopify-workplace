@@ -1,29 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Checkout - Secure Payment Gateway</title>
 
-  <!-- ==========================================
-       1. 安全防护脚本 (禁止右键、调试、白屏检测)
-       ========================================== -->
+<head>
+  <!-- 安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
   <script type="text/javascript">
-    (function() {
-      // 禁用右键、选择、复制
+    (function () {
       document.addEventListener('contextmenu', e => e.preventDefault());
       document.addEventListener('selectstart', e => e.preventDefault());
       document.addEventListener('copy', e => e.preventDefault());
 
-      // 屏蔽 F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S 等
-      document.onkeydown = function(e) {
-        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
-           (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || (e.metaKey && (e.keyCode === 85 || e.keyCode === 83))) {
+      document.onkeydown = function (e) {
+        if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) ||
+          (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || (e.metaKey && (e.keyCode === 85 || e.keyCode === 83))) {
           return false;
         }
       };
 
-      // 核心调试检测：跳转白屏
       function killPage() {
         document.body.innerHTML = "";
         window.location.replace('about:blank');
@@ -33,603 +25,847 @@
         const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
         if (!isRealMobile) {
           const threshold = 160;
-          if ((window.outerWidth - window.innerWidth > threshold) || (window.outerHeight - window.innerHeight > threshold)) {
-            killPage();
-            return true;
-          }
+          const widthDiff = window.outerWidth - window.innerWidth > threshold;
+          const heightDiff = window.outerHeight - window.innerHeight > threshold;
+          if (widthDiff || heightDiff) { killPage(); return true; }
         }
         const start = performance.now();
-        debugger; 
+        debugger;
         const end = performance.now();
-        if (end - start > 50) {
-          killPage();
-          return true;
-        }
+        if (end - start > 50) { killPage(); return true; }
         return false;
       }
-
       setInterval(detectDevTools, 1000);
       window.addEventListener('resize', detectDevTools);
+      window.addEventListener('load', detectDevTools);
     })();
   </script>
-
-  <!-- ==========================================
-       2. 页面样式 (CSS)
-       ========================================== -->
+  <!-- 结束安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Checkout - Secure Payment Gateway</title>
   <style>
-    /* --- 基础重置 --- */
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-      background-color: #fff; color: #333; margin: 0; padding: 0; 
-      -webkit-font-smoothing: antialiased; 
+    /* === 基础重置 === */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #fff;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
     }
-    * { box-sizing: border-box; }
-    .main-container { display: flex; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; min-height: 100vh; }
 
-    /* --- 左侧表单区域 --- */
-    .form-section { flex: 1.2; padding: 40px; background: #fff; min-width: 350px; border-right: 1px solid #e1e1e1; }
-    .section-title { font-size: 18px; font-weight: 600; margin: 35px 0 15px 0; padding-bottom: 10px; color: #333; }
-    .section-title:first-child { margin-top: 0; }
-    
-    .input-group { display: flex; gap: 12px; margin-bottom: 12px; }
-    .input-box { flex: 1; margin-bottom: 12px; }
-    label.field-label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
-    
-    input, select { 
-      width: 100%; padding: 13px; border: 1px solid #d9d9d9; border-radius: 5px; 
-      font-size: 14px; transition: all 0.2s; background: #fff; color: #333; 
+    * {
+      box-sizing: border-box;
     }
-    input:focus, select:focus { border-color: #3e6cf5; outline: none; box-shadow: 0 0 0 1px #3e6cf5; }
 
-    /* --- 支付方式列表 --- */
-    .payment-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-    .payment-option { 
-      display: flex; align-items: center; padding: 18px 15px; 
-      background: #f4f4f4; border: 1px solid transparent; border-left: 5px solid transparent; 
-      border-radius: 4px; cursor: pointer; transition: all 0.2s; position: relative; 
+    .main-container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1100px;
+      margin: 0 auto;
+      min-height: 100vh;
     }
-    .payment-option:hover { background: #e9e9e9; }
-    .payment-option.selected { background-color: #f3ece7; border-left-color: #3e6cf5; }
-    .payment-option input[type="radio"] { width: 18px; height: 18px; margin-right: 15px; accent-color: #3e6cf5; cursor: pointer; }
-    .payment-name { font-size: 15px; font-weight: 500; color: #333; flex: 1; }
-    .payment-icon { 
-      max-height: 24px; width: auto; max-width: 200px; 
-      object-fit: contain; margin-left: 10px; vertical-align: middle; 
+
+    /* === 左侧表单区域 === */
+    .form-section {
+      flex: 1.2;
+      padding: 40px;
+      background: #fff;
+      min-width: 350px;
+      border-right: 1px solid #e1e1e1;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 35px 0 15px 0;
+      padding-bottom: 10px;
+      color: #333;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .input-box {
+      flex: 1;
+      margin-bottom: 12px;
+    }
+
+    label.field-label {
+      display: block;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #d9d9d9;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: all 0.2s;
+      background: #fff;
+      color: #333;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #2b5ef8;
+      outline: none;
+      box-shadow: 0 0 0 1px #2b5ef8;
+    }
+
+    /* === 支付方式列表 === */
+    .payment-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 15px;
+    }
+
+    .payment-option {
+      display: flex;
+      align-items: center;
+      padding: 18px 15px;
+      background: #f4f4f4;
+      border: 1px solid transparent;
+      border-left: 5px solid transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .payment-option:hover {
+      background: #e9e9e9;
+    }
+
+    .payment-option.selected {
+      background-color: #f3ece7;
+      border-left-color: #2b5ef8;
+    }
+
+    .payment-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 15px;
+      accent-color: #2b5ef8;
+      cursor: pointer;
+    }
+
+    .payment-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+    }
+
+    .payment-icon {
+      max-height: 24px;
+      width: auto;
+      max-width: 200px;
+      object-fit: contain;
+      margin-left: 10px;
+      vertical-align: middle;
       image-rendering: -webkit-optimize-contrast;
     }
 
-    /* --- 运费选择器 --- */
-    .shipping-method-item { display: flex; align-items: center; padding: 15px; border: 1px solid #d9d9d9; border-radius: 5px; margin-bottom: 10px; cursor: pointer; }
-    .shipping-method-item.selected { border-color: #3e6cf5; background-color: #f9fdfa; }
-    .shipping-method-item input { margin-right: 15px; width: auto; accent-color: #3e6cf5; }
+    /* === 运费选择器 === */
+    .shipping-method-item {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      border: 1px solid #d9d9d9;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
 
-    /* --- 右侧摘要区域 --- */
-    .summary-section { flex: 0.8; background: #fafafa; min-width: 320px; border-left: 1px solid #e1e1e1; padding: 40px; }
-    .mobile-summary-toggle { 
-      display: none; background: #fafafa; border-bottom: 1px solid #e1e1e1; 
-      border-top: 1px solid #e1e1e1; padding: 18px 20px; cursor: pointer; 
-      justify-content: space-between; align-items: center; user-select: none; 
+    .shipping-method-item.selected {
+      border-color: #2b5ef8;
+      background-color: #f9fdfa;
     }
-    .toggle-left { display: flex; align-items: center; color: #197bbd; font-size: 14px; font-weight: 500; }
-    .toggle-left svg { fill: #197bbd; margin-right: 8px; width: 14px; height: 14px; }
-    .toggle-chevron { margin-left: 6px; transition: transform 0.3s ease; }
-    .toggle-total { font-size: 18px; font-weight: 600; color: #333; }
-    .mobile-summary-toggle.expanded .toggle-chevron { transform: rotate(180deg); }
 
-    .product-list { margin-bottom: 20px; margin-top: 10px; }
-    .product-item { display: flex; align-items: center; margin-bottom: 15px; }
-    .product-img-wrapper { position: relative; margin-right: 15px; }
-    .product-img { 
-      width: 64px; height: 64px; background: #fff; border: 1px solid #e1e1e1; border-radius: 8px; 
-      overflow: hidden; display: flex; align-items: center; justify-content: center; 
+    .shipping-method-item input {
+      margin-right: 15px;
+      width: auto;
+      accent-color: #2b5ef8;
     }
-    .product-img img { width: 100%; height: 100%; object-fit: contain; }
-    .product-qty-badge { 
-      position: absolute; top: -8px; right: -8px; background: #727272; opacity: 0.9; color: #fff; 
-      font-size: 12px; font-weight: 500; width: 20px; height: 20px; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center; z-index: 2; 
-    }
-    .product-info { flex: 1; font-size: 14px; color: #333; font-weight: 500; line-height: 1.4; }
-    .product-variant { font-size: 12px; color: #717171; font-weight: 400; }
-    .product-price { font-size: 14px; font-weight: 500; color: #333; }
-    .summary-line { display: flex; justify-content: space-between; margin-top: 12px; font-size: 14px; color: #555; }
-    .total-line { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e1e1e1; display: flex; justify-content: space-between; align-items: center; }
-    .total-label { font-size: 16px; font-weight: 500; }
-    .total-price { font-size: 24px; font-weight: 600; color: #333; letter-spacing: -0.5px; }
-    .currency-tag { font-size: 12px; color: #717171; margin-left: 5px; font-weight: 400; vertical-align: middle; }
 
-    /* --- 下单按钮 --- */
-    button#submit-btn { width: 100%; padding: 18px; background: #3e6cf5; color: #fff; border: none; border-radius: 6px; font-weight: 600; font-size: 16px; cursor: pointer; margin-top: 30px; }
-    button#submit-btn:hover { background: #1650FF; }
-    button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+    /* === 摘要区域 === */
+    .summary-section {
+      flex: 0.8;
+      background: #fafafa;
+      min-width: 320px;
+      border-left: 1px solid #e1e1e1;
+      padding: 40px;
+    }
 
-    /* --- 翻译选择器样式 --- */
-    .lang-switcher-wrapper { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 20px; }
-    .lang-switcher-wrapper select { 
-      width: auto; padding: 6px 12px; font-size: 13px; border: 1px solid #d9d9d9; 
-      border-radius: 4px; cursor: pointer; background: #fff; color: #666;
+    .mobile-summary-toggle {
+      display: none;
+      background: #fafafa;
+      border-bottom: 1px solid #e1e1e1;
+      border-top: 1px solid #e1e1e1;
+      padding: 18px 20px;
+      cursor: pointer;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
     }
-    .pc-lang-switcher { margin-top: 30px; border-top: 1px solid #e1e1e1; padding-top: 20px; }
 
-    /* --- 遮罩层 (Loading) --- */
-    #wcr-a-payment-loader { 
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-      background: rgba(0, 0, 0, 0.4); z-index: 10000000; display: none; 
-      justify-content: center; align-items: center; backdrop-filter: blur(3px); 
+    .toggle-left {
+      display: flex;
+      align-items: center;
+      color: #197bbd;
+      font-size: 14px;
+      font-weight: 500;
     }
-    .wcr-a-loader-content { 
-      background: #ffffff; padding: 30px 40px; border-radius: 12px; 
-      box-shadow: 0 15px 35px rgba(0,0,0,0.2); display: flex; flex-direction: column; 
-      align-items: center; max-width: 90%; width: 340px; text-align: center; 
-    }
-    .wcr-a-spinner { 
-      width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #2ecc71; 
-      border-radius: 50%; animation: wcr-a-spin 0.3s linear infinite; margin-bottom: 20px; 
-    }
-    .wcr-a-text { font-family: inherit; font-size: 16px; color: #333; font-weight: 500; line-height: 1.5; }
-    @keyframes wcr-a-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* --- 响应式适配 --- */
-    @media (max-width: 900px) {
-      .main-container { flex-direction: column-reverse; } 
-      .form-section { padding: 20px; border-right: none; }
-      .summary-section { 
-        padding: 0; background: #fafafa; border-left: none; width: 100%; 
-        position: sticky; top: 0; z-index: 999; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+    .toggle-left svg {
+      fill: #197bbd;
+      margin-right: 8px;
+      width: 14px;
+      height: 14px;
+    }
+
+    .toggle-chevron {
+      margin-left: 6px;
+      transition: transform 0.3s ease;
+    }
+
+    .toggle-total {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .mobile-summary-toggle.expanded .toggle-chevron {
+      transform: rotate(180deg);
+    }
+
+    .summary-content {
+      display: block;
+    }
+
+    .product-list {
+      margin-bottom: 20px;
+      margin-top: 10px;
+    }
+
+    .product-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .product-img-wrapper {
+      position: relative;
+      margin-right: 15px;
+    }
+
+    .product-img {
+      width: 64px;
+      height: 64px;
+      background: #fff;
+      border: 1px solid #e1e1e1;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .product-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .product-qty-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #727272;
+      opacity: 0.9;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .product-info {
+      flex: 1;
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .product-variant {
+      font-size: 12px;
+      color: #717171;
+      font-weight: 400;
+    }
+
+    .product-price {
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .total-line {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e1e1e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-label {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .total-price {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      letter-spacing: -0.5px;
+    }
+
+    .currency-tag {
+      font-size: 12px;
+      color: #717171;
+      margin-left: 5px;
+      font-weight: 400;
+      vertical-align: middle;
+    }
+
+    /* 按钮样式 */
+    button#submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: #3e6cf5;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 30px;
+    }
+
+    button#submit-btn:hover {
+      background: #1650FF;
+    }
+
+    button#submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* === 翻译选择器样式 (新增加) === */
+    .lang-switcher-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+
+    .lang-switcher-wrapper select {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 13px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .pc-lang-switcher {
+      margin-top: 25px;
+      border-top: 1px solid #e1e1e1;
+      padding-top: 15px;
+    }
+
+    /* === 遮罩层 (保持 V56.0) === */
+    #wcr-a-payment-loader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 10000000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+    }
+
+    .wcr-a-loader-content {
+      background: #ffffff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      max-width: 90%;
+      width: 340px;
+      text-align: center;
+    }
+
+    .wcr-a-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #2ecc71;
+      border-radius: 50%;
+      animation: wcr-a-spin 0.3s linear infinite;
+      margin-bottom: 20px;
+    }
+
+    .wcr-a-text {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      color: #333;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    @keyframes wcr-a-spin {
+      0% {
+        transform: rotate(0deg);
       }
-      .mobile-summary-toggle { display: flex; }
-      .summary-content { display: none; padding: 20px; border-bottom: 1px solid #e1e1e1; max-height: 60vh; overflow-y: auto; }
-      .summary-content.show { display: block; }
-      
-      .pc-lang-switcher { display: none; }
-      .mobile-lang-switcher { display: flex; }
-    }
-    @media (min-width: 901px) {
-      .mobile-lang-switcher { display: none; }
-      .pc-lang-switcher { display: flex; }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
 
-    .trust-badges { display: flex; justify-content: center; align-items: center; gap: 25px; margin-top: 20px; margin-bottom: 10px; }
-    .trust-badges img { height: 40px; width: auto; object-fit: contain; opacity: 0.9; }
+    /* === 移动端适配 === */
+    @media (max-width: 900px) {
+      .main-container {
+        flex-direction: column-reverse;
+      }
+
+      .form-section {
+        padding: 20px;
+        border-right: none;
+      }
+
+      .summary-section {
+        padding: 0;
+        background: #fafafa;
+        border-left: none;
+        width: 100%;
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      }
+
+      .mobile-summary-toggle {
+        display: flex;
+      }
+
+      .summary-content {
+        display: none;
+        padding: 20px;
+        border-bottom: 1px solid #e1e1e1;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+
+      .summary-content.show {
+        display: block;
+        animation: slideDown 0.3s ease-out;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .pc-lang-switcher {
+        display: none;
+      }
+    }
+
+    @media (min-width: 901px) {
+      .mobile-lang-switcher {
+        display: none;
+      }
+    }
+
+    .trust-badges {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 25px;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .trust-badges img {
+      height: 40px;
+      width: auto;
+      object-fit: contain;
+      opacity: 0.9;
+      transition: opacity 0.2s;
+    }
+
+    .trust-badges img:hover {
+      opacity: 1;
+    }
   </style>
 </head>
+
 <body>
 
-<div class="main-container">
-  
-  <!-- 【左侧/下部】表单区 -->
-  <div class="form-section">
-    
-    <!-- A. 移动端翻译入口 -->
-    <div class="lang-switcher-wrapper mobile-lang-switcher">
+  <div class="main-container">
+    <!-- 左侧输入表单 -->
+    <div class="form-section">
+      <!-- 移动端：翻译按钮在最顶端 -->
+      <div class="lang-switcher-wrapper mobile-lang-switcher">
         <select class="lang-selector">
           <option value="en">English</option>
           <option value="ja">日本語</option>
           <option value="ko">한국어</option>
-          <option value="zh-TW">繁體中文</option> 
-        </select>
-    </div>
-
-    <form id="payment-form">
-      <div class="section-title" data-i18n="title_contact">Contact</div>
-      <div class="input-box">
-        <label class="field-label" data-i18n="label_email">Email Address</label>
-        <input type="email" id="email" required placeholder="email@example.com">
-      </div>
-      <div class="input-box">
-        <label class="field-label" data-i18n="label_phone">Phone</label>
-        <input type="tel" id="phone" required placeholder="Phone">
-      </div>
-
-      <div class="section-title" data-i18n="title_shipping">Shipping Address</div>
-      <div class="input-box">
-        <label class="field-label" data-i18n="label_country">Country/Region</label>
-        <select id="country" required>
-          <option value="" disabled selected data-i18n="select_country">Select Country/Region</option>
+          <option value="zh-TW">繁體中文</option>
         </select>
       </div>
 
-      <div class="input-group">
+      <form id="payment-form">
+        <div class="section-title" data-i18n="title_contact">Contact</div>
         <div class="input-box">
-          <label class="field-label" data-i18n="label_fname">First Name</label>
-          <input type="text" id="fname" required>
+          <label class="field-label" data-i18n="label_email">Email Address</label>
+          <input type="email" id="email" required placeholder="email@example.com">
         </div>
         <div class="input-box">
-          <label class="field-label" data-i18n="label_lname">Last Name</label>
-          <input type="text" id="lname" required>
+          <label class="field-label" data-i18n="label_phone">Phone</label>
+          <input type="tel" id="phone" required placeholder="Phone">
         </div>
-      </div>
 
-      <div class="input-box">
-        <label class="field-label" data-i18n="label_address">Address</label>
-        <input type="text" id="address" required placeholder="Street, House No.">
-      </div>
-
-      <div class="input-group">
+        <div class="section-title" data-i18n="title_shipping">Shipping Address</div>
         <div class="input-box">
-          <label class="field-label" data-i18n="label_city">City</label>
-          <input type="text" id="city" required>
+          <label class="field-label" data-i18n="label_country">Country/Region</label>
+          <select id="country" required>
+            <option value="" disabled selected data-i18n="select_country">Select Country/Region</option>
+          </select>
         </div>
+
+        <div class="input-group">
+          <div class="input-box">
+            <label class="field-label" data-i18n="label_fname">First Name</label>
+            <input type="text" id="fname" required>
+          </div>
+          <div class="input-box">
+            <label class="field-label" data-i18n="label_lname">Last Name</label>
+            <input type="text" id="lname" required>
+          </div>
+        </div>
+
         <div class="input-box">
-          <label class="field-label" data-i18n="label_state">State / Province</label>
-          <input type="text" id="state" required>
+          <label class="field-label" data-i18n="label_address">Address</label>
+          <input type="text" id="address" required placeholder="Street, House No.">
         </div>
-        <div class="input-box">
-          <label class="field-label" data-i18n="label_zip">ZIP Code</label>
-          <input type="text" id="zip" required>
+
+        <div class="input-group">
+          <div class="input-box">
+            <label class="field-label" data-i18n="label_city">City</label>
+            <input type="text" id="city" required>
+          </div>
+          <div class="input-box">
+            <label class="field-label" data-i18n="label_state">State / Province</label>
+            <input type="text" id="state" required>
+          </div>
+          <div class="input-box">
+            <label class="field-label" data-i18n="label_zip">ZIP Code</label>
+            <input type="text" id="zip" required>
+          </div>
         </div>
-      </div>
 
-      <div id="shipping-method-area" style="display:none;">
-        <div class="section-title" data-i18n="title_shipping_method">Shipping Method</div>
-        <div id="shipping-rates-list"></div>
-      </div>
+        <div id="shipping-method-area" style="display:none;">
+          <div class="section-title" data-i18n="title_shipping_method">Shipping Method</div>
+          <div id="shipping-rates-list"></div>
+        </div>
 
-      <div class="section-title" data-i18n="title_payment">Payment Method</div>
-      <div id="payment-container" class="payment-list">
-        <div style="padding:15px; color:#666; font-size:14px;">Loading payment options...</div>
-      </div>
-      <input type="hidden" id="gateway" required>
+        <div class="section-title" data-i18n="title_payment">Payment Method</div>
+        <div id="payment-container" class="payment-list">
+          <div style="padding:15px; color:#666; font-size:14px;">Loading payment options...</div>
+        </div>
+        <input type="hidden" id="gateway" required>
 
-      <button type="submit" id="submit-btn" data-i18n="btn_place_order">PLACE ORDER</button>
+        <button type="submit" id="submit-btn" data-i18n="btn_place_order">PLACE ORDER</button>
 
-      <div class="trust-badges">
-        <img src="https://image.defitopay.com/worldgate.svg" alt="Secured by WorldGate">
-        <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS Compliant">
-      </div>
+        <div class="trust-badges">
+          <img src="https://image.defitopay.com/worldgate.svg" alt="Secured by WorldGate">
+          <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS Compliant">
+        </div>
 
-      <div style="margin-top:12px; text-align: center; font-weight: bold; font-size: 11px; color:#bbb;">
+        <div
+          style="margin-top:12px; text-align: center; font-weight: bold; font-size: 11px; color:#bbb; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
           Copyright 2026 Worldpay LLC, and its affiliates.
-      </div>
-    </form>
-  </div>
-
-  <!-- 【右侧/上部】摘要区 -->
-  <div class="summary-section">
-    <div class="mobile-summary-toggle" id="summaryToggle">
-      <div class="toggle-left">
-        <svg viewBox="0 0 20 20"><path d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z"></path></svg>
-        <span id="toggleText" data-i18n="toggle_show">Show order summary</span>
-        <svg class="toggle-chevron" viewBox="0 0 10 7" style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px;"><path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="toggle-total" id="mobile-total-display">$0.00</div>
+        </div>
+      </form>
     </div>
 
-    <div class="summary-content" id="summaryContent">
-      <div id="product-list" class="product-list"></div>
-      
-      <div class="summary-line">
-        <span data-i18n="summary_subtotal">Subtotal</span>
-        <span id="subtotal-val">0.00</span>
+    <!-- 右侧订单摘要 -->
+    <div class="summary-section">
+      <div class="mobile-summary-toggle" id="summaryToggle">
+        <div class="toggle-left">
+          <svg viewBox="0 0 20 20">
+            <path
+              d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z">
+            </path>
+          </svg>
+          <span id="toggleText" data-i18n="toggle_show">Show order summary</span>
+          <svg class="toggle-chevron" viewBox="0 0 10 7"
+            style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px;">
+            <path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="toggle-total" id="mobile-total-display">$0.00</div>
       </div>
-      
-      <div class="summary-line">
-        <span data-i18n="summary_shipping">Shipping</span>
-        <span id="shipping-display" data-i18n="summary_calc">Calculated at next step</span>
-      </div>
-      
-      <div class="total-line">
-        <span class="total-label" data-i18n="summary_total">Total</span>
-        <div style="display:flex; align-items:baseline;">
-           <span class="currency-tag" id="currency-tag">USD</span>
-           <span id="total-val" class="total-price">0.00</span>
+
+      <div class="summary-content" id="summaryContent">
+        <div id="product-list" class="product-list"></div>
+        <div class="summary-line"><span data-i18n="summary_subtotal">Subtotal</span><span id="subtotal-val">0.00</span>
+        </div>
+        <div class="summary-line"><span data-i18n="summary_shipping">Shipping</span><span id="shipping-display"
+            data-i18n="summary_calc">Calculated at next step</span></div>
+        <div class="total-line">
+          <span class="total-label" data-i18n="summary_total">Total</span>
+          <div style="display:flex; align-items:baseline;">
+            <span class="currency-tag" id="currency-tag">USD</span>
+            <span id="total-val" class="total-price">0.00</span>
+          </div>
+        </div>
+
+        <!-- PC端：翻译按钮在摘要最下方 -->
+        <div class="lang-switcher-wrapper pc-lang-switcher">
+          <select class="lang-selector">
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="zh-TW">繁體中文</option>
+          </select>
         </div>
       </div>
-
-      <!-- B. PC端翻译入口 -->
-      <div class="lang-switcher-wrapper pc-lang-switcher">
-        <select class="lang-selector">
-          <option value="en">English</option>
-          <option value="ja">日本語</option>
-          <option value="ko">한국어</option>
-          <option value="zh-TW">繁體中文</option> 
-        </select>
-      </div>
     </div>
   </div>
-</div>
 
-<!-- 支付遮罩层 -->
-<div id="wcr-a-payment-loader">
+  <div id="wcr-a-payment-loader">
     <div class="wcr-a-loader-content">
-        <div class="wcr-a-spinner"></div>
-        <div class="wcr-a-text">
-            <div class="main-msg" data-i18n="mask_main">Securely launching payment</div>
-            <div class="sub-msg" style="font-size: 14px; color: #2ecc71; font-weight: normal;" data-i18n="mask_sub">Please do not exit or close this window</div>
+      <div class="wcr-a-spinner"></div>
+      <div class="wcr-a-text">
+        <div class="main-msg" data-i18n="mask_main">Securely launching payment</div>
+        <div class="sub-msg" style="font-size: 14px; color: #2ecc71; font-weight: normal;" data-i18n="mask_sub">
+          Please do not exit or close this window
         </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- ==========================================
-     3. 核心逻辑 (JavaScript)
-     ========================================== -->
-<script>
-  /**
-   * I18N 翻译管理
-   */
-  const I18nManager = {
-    async apply(lang) {
+  <script>
+    // ==========================================
+    // 多语言核心逻辑 (新增加)
+    // ==========================================
+    async function applyLanguage(lang) {
       try {
         const res = await fetch(`/translate/${lang}.json`);
         if (!res.ok) return;
         const trans = await res.json();
-        
-        // 1. 替换静态文本
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (trans[key]) el.textContent = trans[key];
         });
-
-        // 2. 替换 Placeholders
+        // 更新 Placeholders
         if (trans.placeholder_email) document.getElementById('email').placeholder = trans.placeholder_email;
         if (trans.placeholder_address) document.getElementById('address').placeholder = trans.placeholder_address;
+        if (trans.placeholder_phone) document.getElementById('phone').placeholder = trans.placeholder_phone;
 
-        // 3. 同步 UI 下拉框和持久化
+        // 同步选择器状态
         document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
         localStorage.setItem('preferred_lang', lang);
-      } catch (e) {
-        console.error('Translation Load Failed');
-      }
+      } catch (e) { console.log('Lang Error'); }
     }
-  };
 
-  /**
-   * 全局状态
-   */
-  let currentCart = null;
-  let availableShippingRates = [];
-  let selectedShippingRate = null;
-
-  /**
-   * 初始化
-   */
-  async function init() {
-    // 处理国家选择
-    const allCountries = [
-      { code: "US", name: "United States" }, { code: "JP", name: "日本国" }, 
-      { code: "KR", name: "대한민국" }, { code: "TW", name: "台灣" },
-      { code: "HK", name: "Hong Kong" }, { code: "SG", name: "Singapore" }
-    ];
-    const select = document.getElementById('country');
-    allCountries.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.code; opt.innerText = c.name;
-      select.appendChild(opt);
+    document.querySelectorAll('.lang-selector').forEach(select => {
+      select.addEventListener('change', (e) => applyLanguage(e.target.value));
     });
 
-    // 处理语言初始化
-    const savedLang = localStorage.getItem('preferred_lang');
-    const browserLang = navigator.language.split('-')[0];
-    const defaultLang = savedLang || (['ja', 'ko', 'zh'].includes(browserLang) ? browserLang : 'en');
-    await I18nManager.apply(defaultLang);
+    // ==========================================
+    // V56.0 原始功能逻辑 (保持不变)
+    // ==========================================
+    function showWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'flex'; }
+    function hideWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'none'; }
 
-    // 加载购物车
-    loadCartData();
-  }
-
-  /**
-   * 加载购物车数据
-   */
-  async function loadCartData() {
-    try {
-      const res = await fetch('/cart.js');
-      currentCart = await res.json();
-      
-      let html = '';
-      currentCart.items.forEach(item => {
-        html += `
-          <div class="product-item">
-            <div class="product-img-wrapper">
-              <div class="product-img"><img src="${item.image}"></div>
-              <div class="product-qty-badge">${item.quantity}</div>
-            </div>
-            <div class="product-info">
-              <div style="font-weight:500;">${item.product_title}</div>
-              <div class="product-variant">${item.variant_title || ''}</div>
-            </div>
-            <div class="product-price">${(item.final_line_price/100).toFixed(2)} ${currentCart.currency}</div>
-          </div>`;
-      });
-      document.getElementById('product-list').innerHTML = html;
-      document.getElementById('currency-tag').innerText = currentCart.currency;
-      
-      renderPaymentMethods(currentCart.currency);
-      updateTotalDisplay();
-    } catch (e) {}
-  }
-
-  /**
-   * 渲染支付方式 (根据货币)
-   */
-  function renderPaymentMethods(currency) {
     const shopifyOption = { id: 'shopify_checkout', name: 'Shopify Secure Checkout', icon: 'https://image.defitopay.com/global_pay.svg' };
-    const maps ={
-    'USD': [
-      //{ id: 'credit_card', name: 'Credit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
-      //{ id: 'paypal', name: 'PayPal', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg' },
-      shopifyOption // 放在最后
-    ],
-    'JPY': [
-      { id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' },
-      { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' },
-      //{ id: 'konbini', name: 'Konbini', icon: 'https://image.defitopay.com/konbini.svg' },
-      shopifyOption // 放在最后
-    ],
-    'KRW': [
-      { id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' },
-      { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' },
-      { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' },
-      { id: 'payco', name: 'Naver Pay', icon: 'https://image.defitopay.com/payco.png' },
-      shopifyOption // 放在最后
-    ],
-    'TWD': [
-      { id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' },
-      //{ id: 'linepay_tw', name: 'LINE Pay', icon: 'https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg' },
-      //{ id: 'credit_card', name: 'Credit Card / Debit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
-      shopifyOption // 放在最后
-    ],
-    'CNY': [
-      //{ id: 'alipaycn', name: '支付宝', icon: 'https://image.defitopay.com/alipaycn.png' },
-      //{ id: 'wechat', name: '微信支付', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/73/WeChat_logo.svg' },
-      shopifyOption // 放在最后
-    ],
-    'DEFAULT': [
-      //{ id: 'credit_card', name: 'Credit Card', icon: 'https://cdn-icons-png.flaticon.com/512/6963/6963703.png' },
-      //{ id: 'paypal', name: 'PayPal', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg' },
-      shopifyOption // 放在最后
-    ]
-  };
-    
-    const container = document.getElementById('payment-container');
-    const methods = maps[currency] || maps['DEFAULT'];
-    
-    container.innerHTML = methods.map((m, idx) => `
-      <label class="payment-option ${idx===0?'selected':''}" onclick="selectPayment(this, '${m.id}')">
-        <input type="radio" name="payment_method_radio" ${idx===0?'checked':''}>
-        <div class="payment-name">${m.name}</div>
-        <img src="${m.icon}" class="payment-icon">
-      </label>
-    `).join('');
-    
-    if(methods[0]) document.getElementById('gateway').value = methods[0].id;
-  }
-
-  window.selectPayment = function(el, id) {
-    document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    el.querySelector('input').checked = true;
-    document.getElementById('gateway').value = id;
-  };
-
-  /**
-   * 运费计算逻辑
-   */
-  async function fetchShippingRates() {
-    const country = document.getElementById('country').value;
-    const province = document.getElementById('state').value;
-    const zip = document.getElementById('zip').value;
-    if (!zip || !country) return;
-
-    document.getElementById('shipping-method-area').style.display = 'block';
-    const listDiv = document.getElementById('shipping-rates-list');
-    listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Calculating...</div>";
-
-    try {
-      const query = `shipping_address[zip]=${encodeURIComponent(zip)}&shipping_address[country]=${encodeURIComponent(country)}&shipping_address[province]=${encodeURIComponent(province)}`;      
-      const res = await fetch(`/cart/shipping_rates.json?${query}`);
-      const data = await res.json();
-      availableShippingRates = data.shipping_rates;
-      
-      if (availableShippingRates && availableShippingRates.length > 0) {
-        listDiv.innerHTML = availableShippingRates.map((rate, idx) => `
-          <div class="shipping-method-item ${idx===0?'selected':''}" id="ship-box-${idx}" onclick="selectShipping(${idx})">
-            <input type="radio" name="s_rate" id="r-${idx}" ${idx===0?'checked':''}>
-            <div style="flex:1;">${rate.name}</div>
-            <div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div>
-          </div>
-        `).join('');
-        selectedShippingRate = availableShippingRates[0];
-        updateTotalDisplay();
-      }
-    } catch (e) {}
-  }
-
-  window.selectShipping = function(idx) {
-    document.querySelectorAll('.shipping-method-item').forEach(o => o.classList.remove('selected'));
-    document.getElementById(`ship-box-${idx}`).classList.add('selected');
-    selectedShippingRate = availableShippingRates[idx];
-    updateTotalDisplay();
-  };
-
-  function updateTotalDisplay() {
-    if (!currentCart) return;
-    const subtotal = currentCart.total_price / 100;
-    const ship = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-    
-    if (selectedShippingRate) {
-      document.getElementById('shipping-display').innerText = ship.toFixed(2) + " " + currentCart.currency;
-    }
-    
-    const finalTotal = subtotal + ship;
-    document.getElementById('subtotal-val').innerText = subtotal.toFixed(2) + " " + currentCart.currency;
-    document.getElementById('total-val').innerText = finalTotal.toFixed(2);
-    document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
-    window.finalPayAmount = finalTotal.toFixed(2);
-  }
-
-  /**
-   * 表单提交 (支付逻辑)
-   */
-  document.getElementById('payment-form').onsubmit = async (e) => {
-    e.preventDefault();
-    const gateway = document.getElementById('gateway').value;
-    if(!gateway) return;
-
-    document.getElementById('wcr-a-payment-loader').style.display = 'flex';
-
-    if (gateway === 'shopify_checkout') {
-      const params = new URLSearchParams();
-      const fields = { 'checkout[email]': 'email', 'checkout[shipping_address][first_name]': 'fname', 'checkout[shipping_address][last_name]': 'lname', 'checkout[shipping_address][address1]': 'address', 'checkout[shipping_address][city]': 'city', 'checkout[shipping_address][country]': 'country', 'checkout[shipping_address][province]': 'state', 'checkout[shipping_address][zip]': 'zip', 'checkout[shipping_address][phone]': 'phone' };
-      for (let k in fields) { params.append(k, document.getElementById(fields[k]).value); }
-      window.top.location.href = '/checkout?' + params.toString();
-      return;
-    }
-
-    // 外部 API 流程
-    const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
-    const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
-    const payload = {
-      order_id: "SH-" + Date.now(),
-      total_amount: window.finalPayAmount,
-      currency: currentCart.currency,
-      gateway_mask: gateway,
-      origin_domain: window.location.host,
-      billing: {
-        email: document.getElementById('email').value,
-        first_name: document.getElementById('fname').value,
-        last_name: document.getElementById('lname').value,
-        address1: document.getElementById('address').value,
-        city: document.getElementById('city').value,
-        zip: document.getElementById('zip').value,
-        country: document.getElementById('country').value,
-        phone: document.getElementById('phone').value
-      },
-      line_items: currentCart.items.map(i => ({ variant_id: i.variant_id, quantity: i.quantity, title: i.title, price: (i.price/100).toFixed(2) }))
+    const currencyPaymentMap = {
+      'USD': [shopifyOption],
+      'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' }, shopifyOption],
+      'KRW': [{ id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' }, { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' }, { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' }, { id: 'payco', name: 'Naver Pay', icon: 'https://image.defitopay.com/payco.png' }, shopifyOption],
+      'TWD': [{ id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' }, shopifyOption],
+      'CNY': [shopifyOption],
+      'DEFAULT': [shopifyOption]
     };
 
-    try {
-      const res = await fetch('https://test-pay.defitopay.com/v1/an/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'worldpay_public_key': atob(_p), 'cus_secret_key': atob(_s), 'X-Customer-Language': navigator.language },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.pay_url) window.top.location.href = data.pay_url;
-      else document.getElementById('wcr-a-payment-loader').style.display = 'none';
-    } catch (err) {
-      document.getElementById('wcr-a-payment-loader').style.display = 'none';
+    const allCountries = [{ code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "KR", name: "대한민국" }, { code: "TW", name: "Taiwan" }, { code: "HK", name: "Hong Kong" }, { code: "SG", name: "Singapore" }, { code: "MY", name: "Malaysia" }, { code: "GB", name: "United Kingdom" }, { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }];
+    let currentCart = null, availableShippingRates = [], selectedShippingRate = null;
+
+    function initCountries() {
+      const select = document.getElementById('country');
+      allCountries.forEach(c => { const option = document.createElement('option'); option.value = c.code; option.innerText = c.name; select.appendChild(option); });
     }
-  };
 
-  /**
-   * 事件绑定
-   */
-  document.getElementById('summaryToggle').addEventListener('click', function() {
-    const content = document.getElementById('summaryContent');
-    content.classList.toggle('show');
-    this.classList.toggle('expanded');
-  });
+    function renderPaymentMethods(currency) {
+      const container = document.getElementById('payment-container');
+      const methods = currencyPaymentMap[currency] || currencyPaymentMap['DEFAULT'];
+      let html = '';
+      methods.forEach((m, index) => {
+        const isChecked = index === 0; if (isChecked) document.getElementById('gateway').value = m.id;
+        html += `<label class="payment-option ${isChecked ? 'selected' : ''}" onclick="selectPayment(this, '${m.id}')"><input type="radio" name="payment_method_radio" ${isChecked ? 'checked' : ''}><div class="payment-name">${m.name}</div><img src="${m.icon}" alt="${m.name}" class="payment-icon"></label>`;
+      });
+      container.innerHTML = html;
+    }
 
-  document.querySelectorAll('.lang-selector').forEach(s => {
-    s.addEventListener('change', (e) => I18nManager.apply(e.target.value));
-  });
+    window.selectPayment = function (el, gatewayId) {
+      document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected'); el.querySelector('input').checked = true;
+      document.getElementById('gateway').value = gatewayId;
+    };
 
-  ['zip', 'state', 'country'].forEach(id => {
-    document.getElementById(id).addEventListener('change', fetchShippingRates);
-  });
+    const summaryToggle = document.getElementById('summaryToggle');
+    const summaryContent = document.getElementById('summaryContent');
+    summaryToggle.addEventListener('click', () => { summaryContent.classList.toggle('show'); summaryToggle.classList.toggle('expanded'); });
 
-  window.addEventListener('DOMContentLoaded', init);
-</script>
+    async function loadCartData() {
+      try {
+        const res = await fetch('/cart.js'); currentCart = await res.json();
+        let html = '';
+        currentCart.items.forEach(item => {
+          html += `<div class="product-item"><div class="product-img-wrapper"><div class="product-img"><img src="${item.image}"></div><div class="product-qty-badge">${item.quantity}</div></div><div class="product-info"><div style="font-weight:500;">${item.product_title}</div><div class="product-variant">${item.variant_title || ''}</div></div><div class="product-price">${(item.final_line_price / 100).toFixed(2)} ${currentCart.currency}</div></div>`;
+        });
+        document.getElementById('product-list').innerHTML = html;
+        document.getElementById('currency-tag').innerText = currentCart.currency;
+        renderPaymentMethods(currentCart.currency); updateTotalDisplay();
+      } catch (err) { }
+    }
 
+    async function fetchShippingRates() {
+      const country = document.getElementById('country').value, province = document.getElementById('state').value, zip = document.getElementById('zip').value;
+      if (!zip || zip.length < 3 || !country) return;
+      const listDiv = document.getElementById('shipping-rates-list');
+      document.getElementById('shipping-method-area').style.display = 'block';
+      listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Calculating rates...</div>";
+      try {
+        const query = `shipping_address[zip]=${encodeURIComponent(zip)}&shipping_address[country]=${encodeURIComponent(country)}&shipping_address[province]=${encodeURIComponent(province)}`;
+        const res = await fetch(`/cart/shipping_rates.json?${query}`);
+        const data = await res.json(); availableShippingRates = data.shipping_rates;
+        if (availableShippingRates && availableShippingRates.length > 0) {
+          let html = '';
+          availableShippingRates.forEach((rate, index) => {
+            if (index === 0) selectedShippingRate = rate;
+            html += `<div class="shipping-method-item ${index === 0 ? 'selected' : ''}" id="ship-box-${index}" onclick="selectShipping(${index})"><input type="radio" name="s_rate" id="r-${index}" ${index === 0 ? 'checked' : ''}><div style="flex:1;">${rate.name}</div><div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div></div>`;
+          });
+          listDiv.innerHTML = html; updateTotalDisplay();
+        }
+      } catch (err) { }
+    }
+
+    window.selectShipping = function (index) {
+      document.querySelectorAll('.shipping-method-item').forEach(el => el.classList.remove('selected'));
+      document.getElementById(`ship-box-${index}`).classList.add('selected');
+      selectedShippingRate = availableShippingRates[index]; updateTotalDisplay();
+    };
+
+    function updateTotalDisplay() {
+      if (!currentCart) return;
+      const subtotal = currentCart.total_price / 100;
+      let shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+      if (selectedShippingRate) document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
+      const finalTotal = subtotal + shippingPrice;
+      document.getElementById('subtotal-val').innerText = subtotal.toFixed(2) + " " + currentCart.currency;
+      document.getElementById('total-val').innerText = finalTotal.toFixed(2);
+      document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
+      window.finalPayAmount = finalTotal.toFixed(2);
+    }
+
+    initCountries(); loadCartData();
+    ['zip', 'state', 'country'].forEach(id => document.getElementById(id).addEventListener('change', fetchShippingRates));
+
+    document.getElementById('payment-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const gatewayVal = document.getElementById('gateway').value;
+      if (!gatewayVal) return;
+      showWcrLoading();
+
+      if (gatewayVal === 'shopify_checkout') {
+        const params = new URLSearchParams();
+        const fields = { 'checkout[email]': 'email', 'checkout[shipping_address][first_name]': 'fname', 'checkout[shipping_address][last_name]': 'lname', 'checkout[shipping_address][address1]': 'address', 'checkout[shipping_address][city]': 'city', 'checkout[shipping_address][country]': 'country', 'checkout[shipping_address][province]': 'state', 'checkout[shipping_address][zip]': 'zip', 'checkout[shipping_address][phone]': 'phone' };
+        for (let key in fields) { params.append(key, document.getElementById(fields[key]).value); }
+        window.top.location.href = '/checkout?' + params.toString();
+        return;
+      }
+
+      btn.disabled = true;
+      const payload = { order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'), total_amount: window.finalPayAmount, currency: currentCart.currency, gateway_mask: gatewayVal, origin_domain: window.location.host, return_url: window.location.origin + "/pages/thank-you", hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", line_items: currentCart.items.map(item => ({ variant_id: item.variant_id, quantity: item.quantity, title: item.title, price: (item.price / 100).toFixed(2) })), shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [], billing: { email: document.getElementById('email').value, phone: document.getElementById('phone').value, first_name: document.getElementById('fname').value, last_name: document.getElementById('lname').value, address1: document.getElementById('address').value, city: document.getElementById('city').value, state: document.getElementById('state').value, postcode: document.getElementById('zip').value, country: document.getElementById('country').value, province: document.getElementById('state').value, zip: document.getElementById('zip').value } };
+      const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
+      const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
+
+      try {
+        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'worldpay_public_key': atob(_p), 'cus_secret_key': atob(_s), 'X-Customer-Language': navigator.language }, body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (result.pay_url) { window.top.location.href = result.pay_url; }
+        else { hideWcrLoading(); alert("Error: " + result.message); btn.disabled = false; }
+      } catch (err) { hideWcrLoading(); alert("System Error."); btn.disabled = false; }
+    };
+
+    // 初始化语言
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedLang = localStorage.getItem('preferred_lang');
+      const browserLang = navigator.language.split('-')[0];
+      const defaultLang = savedLang || (['ja', 'ko', 'zh'].includes(browserLang) ? (browserLang === 'zh' ? 'zh-TW' : browserLang) : 'en');
+      await applyLanguage(defaultLang);
+    });
+  </script>
 </body>
+
 </html>
