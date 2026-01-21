@@ -3,7 +3,50 @@
 
 <head>
   <!-- 安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
+<script type="text/javascript">
+    (function () {
+      // 1. 保留：禁止右键菜单 (防止用户点击“检查”)
+      document.addEventListener('contextmenu', e => e.preventDefault());
 
+      // --- 已移除 selectstart 和 copy 的阻止逻辑 ---
+      // 现在允许用户使用快捷键 (Ctrl+C / Ctrl+V) 复制粘贴，并允许拖动选择文本
+      // 注意：由于禁用了右键，粘贴需通过键盘快捷键完成
+
+      // 2. 保留：禁止快捷键打开开发者工具 (F12, Ctrl+Shift+I, Ctrl+U 等)
+      document.onkeydown = function (e) {
+        if (e.keyCode === 123 || 
+          (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
+          (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || 
+          (e.metaKey && (e.keyCode === 85 || e.keyCode === 83))) {
+          return false;
+        }
+      };
+
+      function killPage() {
+        document.body.innerHTML = "";
+        window.location.replace('about:blank');
+      }
+
+      function detectDevTools() {
+        const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
+        if (!isRealMobile) {
+          const threshold = 160;
+          const widthDiff = window.outerWidth - window.innerWidth > threshold;
+          const heightDiff = window.outerHeight - window.innerHeight > threshold;
+          if (widthDiff || heightDiff) { killPage(); return true; }
+        }
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        if (end - start > 50) { killPage(); return true; }
+        return false;
+      }
+      
+      setInterval(detectDevTools, 1000);
+      window.addEventListener('resize', detectDevTools);
+      window.addEventListener('load', detectDevTools);
+    })();
+  </script>
   <!-- 结束安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
