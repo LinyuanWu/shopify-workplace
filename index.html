@@ -845,11 +845,13 @@ async function applyLanguage(lang) {
 
     // 初始化语言
     window.addEventListener('DOMContentLoaded', async () => {
-      const savedLang = localStorage.getItem('preferred_lang');
-      const browserLang = navigator.language.split('-')[0];
-      const defaultLang = savedLang || (['ja', 'ko', 'zh'].includes(browserLang) ? (browserLang === 'zh' ? 'zh-TW' : browserLang) : 'en');
-      await applyLanguage(defaultLang);
-    });
+      // 1. 优先拿手动选过的，2. 没选过才看浏览器语言，3. 最后保底英语
+      const saved = localStorage.getItem('preferred_lang');
+      const browser = navigator.language.split('-')[0];
+      const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
+      
+      await applyLanguage(target);
+    });    
   </script>
 </body>
 
