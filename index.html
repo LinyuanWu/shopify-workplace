@@ -1020,6 +1020,9 @@
         total_amount: window.finalPayAmount, 
         currency: currentCart.currency, 
         gateway_mask: gatewayVal, 
+        //V61.0 增加传输优惠券折扣信息
+        discount_code: window.appliedDiscountCode, 
+        discount_amount: window.appliedDiscountAmount, 
         origin_domain: window.location.host, 
         return_url: window.location.origin + "/pages/thank-you", 
         hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", 
