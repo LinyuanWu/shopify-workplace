@@ -23,5 +23,8 @@
   "toggle_show": "Show order summary",
   "toggle_hide": "Hide order summary",
   "mask_main": "Securely launching payment",
-  "mask_sub": "Please do not exit or close this window"
+  "mask_sub": "Please do not exit or close this window",
+  "placeholder_discount": "Discount code",
+  "btn_discount_apply": "Apply",
+  "summary_discount": "Discount"
 }

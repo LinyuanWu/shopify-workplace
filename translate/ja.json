@@ -23,5 +23,8 @@
   "toggle_show": "注文内容を表示",
   "toggle_hide": "注文内容を非表示",
   "mask_main": "安全に決済画面へ移動中",
-  "mask_sub": "このウィンドウを閉じないでください"
+  "mask_sub": "このウィンドウを閉じないでください",
+  "placeholder_discount": "クーポンコード",
+  "btn_discount_apply": "適用",
+  "summary_discount": "割引"  
 }

@@ -8,10 +8,6 @@
       // 1. 保留：禁止右键菜单 (防止用户点击“检查”)
       document.addEventListener('contextmenu', e => e.preventDefault());
 
-      // --- 已移除 selectstart 和 copy 的阻止逻辑 ---
-      // 现在允许用户使用快捷键 (Ctrl+C / Ctrl+V) 复制粘贴，并允许拖动选择文本
-      // 注意：由于禁用了右键，粘贴需通过键盘快捷键完成
-
       // 2. 保留：禁止快捷键打开开发者工具 (F12, Ctrl+Shift+I, Ctrl+U 等)
       document.onkeydown = function (e) {
         if (e.keyCode === 123 || 
@@ -47,7 +43,7 @@
       window.addEventListener('load', detectDevTools);
     })();
   </script>
-  <!-- 结束安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
+  <!-- 结束安全防护 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Checkout - Secure Payment Gateway</title>
@@ -131,6 +127,38 @@
       border-color: #2b5ef8;
       outline: none;
       box-shadow: 0 0 0 1px #2b5ef8;
+    }
+
+    /* === [新增] 优惠券输入样式 === */
+    .discount-container {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e1e1e1;
+    }
+    .discount-container input {
+      flex: 1;
+      padding: 11px;
+    }
+    .discount-container button {
+      padding: 0 20px;
+      background: #eee;
+      border: 1px solid #d9d9d9;
+      border-radius: 5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #333;
+    }
+    .discount-container button:hover {
+      background: #e0e0e0;
+    }
+    .discount-message {
+      font-size: 12px;
+      margin-top: -15px;
+      margin-bottom: 15px;
+      display: none;
     }
 
     /* === 支付方式列表 === */
@@ -397,7 +425,7 @@
       cursor: not-allowed;
     }
 
-    /* === 翻译选择器样式 (新增加) === */
+    /* === 翻译选择器样式 === */
     .lang-switcher-wrapper {
       display: flex;
       align-items: center;
@@ -421,7 +449,7 @@
       padding-top: 15px;
     }
 
-    /* === 遮罩层 (保持 V56.0) === */
+    /* === 遮罩层 === */
     #wcr-a-payment-loader {
       position: fixed;
       top: 0;
@@ -468,13 +496,8 @@
     }
 
     @keyframes wcr-a-spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     /* === 移动端适配 === */
@@ -517,15 +540,8 @@
       }
 
       @keyframes slideDown {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       .pc-lang-switcher {
@@ -672,8 +688,22 @@
 
       <div class="summary-content" id="summaryContent">
         <div id="product-list" class="product-list"></div>
+
+        <!-- [新增] 优惠券输入位置 -->
+        <div class="discount-container">
+          <input type="text" id="discount-input" placeholder="Discount code" data-i18n="placeholder_discount">
+          <button type="button" id="apply-discount-btn" data-i18n="btn_discount_apply">Apply</button>
+        </div>
+        <div id="discount-msg" class="discount-message"></div>
+
         <div class="summary-line"><span data-i18n="summary_subtotal">Subtotal</span><span id="subtotal-val">0.00</span>
         </div>
+
+        <!-- [新增] 优惠减免行 -->
+        <div class="summary-line" id="discount-row" style="display:none; color: #2ecc71; font-weight: 500;">
+          <span data-i18n="summary_discount">Discount</span><span id="discount-val">0.00</span>
+        </div>
+
         <div class="summary-line"><span data-i18n="summary_shipping">Shipping</span><span id="shipping-display"
             data-i18n="summary_calc">Calculated at next step</span></div>
         <div class="total-line">
@@ -711,7 +741,7 @@
 
   <script>
     // ==========================================
-    // 多语言核心逻辑 (新增加)
+    // 多语言核心逻辑
     // ==========================================
     async function applyLanguage(lang) {
       const CLOUDFLARE_BASE_URL = 'https://shopify-workplace.pages.dev'; 
@@ -735,7 +765,8 @@
         const placeholders = {
           'email': 'placeholder_email',
           'address': 'placeholder_address',
-          'phone': 'placeholder_phone'
+          'phone': 'placeholder_phone',
+          'discount-input': 'placeholder_discount'
         };
         for (let id in placeholders) {
           const el = document.getElementById(id);
@@ -747,38 +778,18 @@
         localStorage.setItem('preferred_lang', lang);
 
       } catch (e) {
-        // 生产环境仅保留必要的错误记录，不打印调试信息
         console.error('i18n error');
       }
     }
 
-    /**
-     * 绑定下拉框切换事件
-     */
     function bindLangEvents() {
       document.querySelectorAll('.lang-selector').forEach(select => {
         select.onchange = (e) => applyLanguage(e.target.value);
       });
     }
 
-    /**
-     * 页面加载初始化
-     */
-    window.addEventListener('DOMContentLoaded', () => {
-      bindLangEvents();
-
-      const saved = localStorage.getItem('preferred_lang');
-      const browser = navigator.language.split('-')[0];
-      
-      // 优先级：手动选择 > 浏览器识别 > 英语
-      const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
-      
-      applyLanguage(target);
-    });
-
-
     // ==========================================
-    // V56.0 原始功能逻辑 (保持不变)
+    // 支付核心功能逻辑 (完整保留并增量)
     // ==========================================
     function showWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'flex'; }
     function hideWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'none'; }
@@ -787,22 +798,37 @@
     const currencyPaymentMap = {
       'USD': [shopifyOption],
       'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, 
-              { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' }, shopifyOption],
+              { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' }, 
+              { id: 'merpay', name: 'Merpay', icon: 'https://image.defitopay.com/merpay.png' }, shopifyOption],
       'KRW': [{ id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' }, 
               { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' }, 
               { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' }, 
-              { id: 'payco', name: 'Naver Pay', icon: 'https://image.defitopay.com/payco.png' }, shopifyOption],
+              { id: 'payco', name: 'PAYCO', icon: 'https://image.defitopay.com/payco.png' }, shopifyOption],
       'TWD': [{ id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' }, shopifyOption],
+      'MYR': [{ id: 'boost', name: 'Boost', icon: 'https://image.defitopay.com/my_boost.png' }, 
+              { id: 'tng', name: 'TNG', icon: 'https://image.defitopay.com/my_tng.png' }, shopifyOption],
+      'SGD': [{ id: 'paynow', name: 'Paynow', icon: 'https://image.defitopay.com/sg_paynow.png' }, shopifyOption],
       'CNY': [shopifyOption],
-      'DEFAULT': [shopifyOption]
+      'DEFAULT': [{ id: 'worldpay', name: 'WorldPay', icon: 'https://image.defitopay.com/worldpay.svg' }, shopifyOption]
     };
 
-    const allCountries = [{ code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "KR", name: "대한민국" }, { code: "TW", name: "Taiwan" }, { code: "HK", name: "Hong Kong" }, { code: "SG", name: "Singapore" }, { code: "MY", name: "Malaysia" }, { code: "GB", name: "United Kingdom" }, { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }];
+    const allCountries = [
+      { code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "KR", name: "대한민국" }, 
+      { code: "TW", name: "Taiwan" }, { code: "HK", name: "Hong Kong" }, { code: "SG", name: "Singapore" }, 
+      { code: "MY", name: "Malaysia" }, { code: "GB", name: "United Kingdom" }, { code: "CA", name: "Canada" }, 
+      { code: "AU", name: "Australia" }, { code: "DE", name: "Germany" }, { code: "FR", name: "France" }
+    ];
+
     let currentCart = null, availableShippingRates = [], selectedShippingRate = null;
 
     function initCountries() {
       const select = document.getElementById('country');
-      allCountries.forEach(c => { const option = document.createElement('option'); option.value = c.code; option.innerText = c.name; select.appendChild(option); });
+      allCountries.forEach(c => { 
+        const option = document.createElement('option'); 
+        option.value = c.code; 
+        option.innerText = c.name; 
+        select.appendChild(option); 
+      });
     }
 
     function renderPaymentMethods(currency) {
@@ -824,38 +850,118 @@
 
     const summaryToggle = document.getElementById('summaryToggle');
     const summaryContent = document.getElementById('summaryContent');
-    summaryToggle.addEventListener('click', () => { summaryContent.classList.toggle('show'); summaryToggle.classList.toggle('expanded'); });
+    summaryToggle.addEventListener('click', () => { 
+      summaryContent.classList.toggle('show'); 
+      summaryToggle.classList.toggle('expanded'); 
+    });
+
+    // --- [核心增量] 优惠券处理函数 ---
+    async function handleDiscount() {
+      const code = document.getElementById('discount-input').value.trim();
+      const msgEl = document.getElementById('discount-msg');
+      const btn = document.getElementById('apply-discount-btn');
+
+      if (!code) return;
+
+      btn.disabled = true;
+      btn.innerText = '...';
+
+      try {
+        // Shopify 原生逻辑：通过路径 /discount/CODE 会将优惠券存入 Session
+        await fetch(`/discount/${code}`);
+        
+        // 重新拉取最新的购物车信息 (Shopify 会计算优惠)
+        await loadCartData();
+
+        if (currentCart.total_discount > 0) {
+          msgEl.innerText = "Discount code applied successfully!";
+          msgEl.style.color = "#2ecc71";
+        } else {
+          msgEl.innerText = "Code is invalid or does not meet requirements.";
+          msgEl.style.color = "#e74c3c";
+        }
+        msgEl.style.display = "block";
+
+      } catch (e) {
+        msgEl.innerText = "Application error.";
+        msgEl.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Apply';
+      }
+    }
 
     async function loadCartData() {
       try {
-        const res = await fetch('/cart.js'); currentCart = await res.json();
+        const res = await fetch('/cart.js'); 
+        currentCart = await res.json();
         let html = '';
         currentCart.items.forEach(item => {
           html += `<div class="product-item"><div class="product-img-wrapper"><div class="product-img"><img src="${item.image}"></div><div class="product-qty-badge">${item.quantity}</div></div><div class="product-info"><div style="font-weight:500;">${item.product_title}</div><div class="product-variant">${item.variant_title || ''}</div></div><div class="product-price">${(item.final_line_price / 100).toFixed(2)} ${currentCart.currency}</div></div>`;
         });
         document.getElementById('product-list').innerHTML = html;
         document.getElementById('currency-tag').innerText = currentCart.currency;
-        renderPaymentMethods(currentCart.currency); updateTotalDisplay();
+        renderPaymentMethods(currentCart.currency); 
+        updateTotalDisplay();
       } catch (err) { }
     }
 
+    function updateTotalDisplay() {
+      if (!currentCart) return;
+      
+      const originalSubtotal = currentCart.original_total_price / 100;
+      const totalDiscount = currentCart.total_discount / 100;
+      let shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+      
+      // 实付金额 = (原价 - 折扣) + 运费
+      const discountedSubtotal = currentCart.total_price / 100; 
+      const finalTotal = discountedSubtotal + shippingPrice;
+
+      // 更新显示
+      document.getElementById('subtotal-val').innerText = originalSubtotal.toFixed(2) + " " + currentCart.currency;
+      
+      if (totalDiscount > 0) {
+        document.getElementById('discount-row').style.display = 'flex';
+        document.getElementById('discount-val').innerText = '-' + totalDiscount.toFixed(2) + " " + currentCart.currency;
+      } else {
+        document.getElementById('discount-row').style.display = 'none';
+      }
+
+      if (selectedShippingRate) {
+        document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
+      }
+
+      document.getElementById('total-val').innerText = finalTotal.toFixed(2);
+      document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
+      window.finalPayAmount = finalTotal.toFixed(2);
+    }
+
     async function fetchShippingRates() {
-      const country = document.getElementById('country').value, province = document.getElementById('state').value, zip = document.getElementById('zip').value;
+      const country = document.getElementById('country').value, 
+            province = document.getElementById('state').value, 
+            zip = document.getElementById('zip').value;
       if (!zip || zip.length < 3 || !country) return;
+      
       const listDiv = document.getElementById('shipping-rates-list');
       document.getElementById('shipping-method-area').style.display = 'block';
       listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Calculating rates...</div>";
+      
       try {
         const query = `shipping_address[zip]=${encodeURIComponent(zip)}&shipping_address[country]=${encodeURIComponent(country)}&shipping_address[province]=${encodeURIComponent(province)}`;
         const res = await fetch(`/cart/shipping_rates.json?${query}`);
-        const data = await res.json(); availableShippingRates = data.shipping_rates;
+        const data = await res.json(); 
+        availableShippingRates = data.shipping_rates;
+        
         if (availableShippingRates && availableShippingRates.length > 0) {
           let html = '';
           availableShippingRates.forEach((rate, index) => {
             if (index === 0) selectedShippingRate = rate;
             html += `<div class="shipping-method-item ${index === 0 ? 'selected' : ''}" id="ship-box-${index}" onclick="selectShipping(${index})"><input type="radio" name="s_rate" id="r-${index}" ${index === 0 ? 'checked' : ''}><div style="flex:1;">${rate.name}</div><div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div></div>`;
           });
-          listDiv.innerHTML = html; updateTotalDisplay();
+          listDiv.innerHTML = html; 
+          updateTotalDisplay();
+        } else {
+          listDiv.innerHTML = "No shipping rates found for your address.";
         }
       } catch (err) { }
     }
@@ -863,24 +969,26 @@
     window.selectShipping = function (index) {
       document.querySelectorAll('.shipping-method-item').forEach(el => el.classList.remove('selected'));
       document.getElementById(`ship-box-${index}`).classList.add('selected');
-      selectedShippingRate = availableShippingRates[index]; updateTotalDisplay();
+      selectedShippingRate = availableShippingRates[index]; 
+      updateTotalDisplay();
     };
 
-    function updateTotalDisplay() {
-      if (!currentCart) return;
-      const subtotal = currentCart.total_price / 100;
-      let shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-      if (selectedShippingRate) document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
-      const finalTotal = subtotal + shippingPrice;
-      document.getElementById('subtotal-val').innerText = subtotal.toFixed(2) + " " + currentCart.currency;
-      document.getElementById('total-val').innerText = finalTotal.toFixed(2);
-      document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
-      window.finalPayAmount = finalTotal.toFixed(2);
-    }
+    // --- 初始化流程 ---
+    window.addEventListener('load', () => {
+      initCountries(); 
+      loadCartData();
+      bindLangEvents();
 
-    initCountries(); loadCartData();
+      const saved = localStorage.getItem('preferred_lang');
+      const browser = navigator.language.split('-')[0];
+      const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
+      applyLanguage(target);
+    });
+
     ['zip', 'state', 'country'].forEach(id => document.getElementById(id).addEventListener('change', fetchShippingRates));
+    document.getElementById('apply-discount-btn').addEventListener('click', handleDiscount);
 
+    // --- 提交逻辑 ---
     document.getElementById('payment-form').onsubmit = async (e) => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
@@ -890,19 +998,56 @@
 
       if (gatewayVal === 'shopify_checkout') {
         const params = new URLSearchParams();
-        const fields = { 'checkout[email]': 'email', 'checkout[shipping_address][first_name]': 'fname', 'checkout[shipping_address][last_name]': 'lname', 'checkout[shipping_address][address1]': 'address', 'checkout[shipping_address][city]': 'city', 'checkout[shipping_address][country]': 'country', 'checkout[shipping_address][province]': 'state', 'checkout[shipping_address][zip]': 'zip', 'checkout[shipping_address][phone]': 'phone' };
+        const fields = { 
+          'checkout[email]': 'email', 
+          'checkout[shipping_address][first_name]': 'fname', 
+          'checkout[shipping_address][last_name]': 'lname', 
+          'checkout[shipping_address][address1]': 'address', 
+          'checkout[shipping_address][city]': 'city', 
+          'checkout[shipping_address][country]': 'country', 
+          'checkout[shipping_address][province]': 'state', 
+          'checkout[shipping_address][zip]': 'zip', 
+          'checkout[shipping_address][phone]': 'phone' 
+        };
         for (let key in fields) { params.append(key, document.getElementById(fields[key]).value); }
         window.top.location.href = '/checkout?' + params.toString();
         return;
       }
 
       btn.disabled = true;
-      const payload = { order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'), total_amount: window.finalPayAmount, currency: currentCart.currency, gateway_mask: gatewayVal, origin_domain: window.location.host, return_url: window.location.origin + "/pages/thank-you", hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", line_items: currentCart.items.map(item => ({ variant_id: item.variant_id, quantity: item.quantity, title: item.title, price: (item.price / 100).toFixed(2) })), shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [], billing: { email: document.getElementById('email').value, phone: document.getElementById('phone').value, first_name: document.getElementById('fname').value, last_name: document.getElementById('lname').value, address1: document.getElementById('address').value, city: document.getElementById('city').value, state: document.getElementById('state').value, postcode: document.getElementById('zip').value, country: document.getElementById('country').value, province: document.getElementById('state').value, zip: document.getElementById('zip').value } };
+      const payload = { 
+        order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'), 
+        total_amount: window.finalPayAmount, 
+        currency: currentCart.currency, 
+        gateway_mask: gatewayVal, 
+        origin_domain: window.location.host, 
+        return_url: window.location.origin + "/pages/thank-you", 
+        hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", 
+        line_items: currentCart.items.map(item => ({ variant_id: item.variant_id, quantity: item.quantity, title: item.title, price: (item.price / 100).toFixed(2) })), 
+        shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [], 
+        billing: { 
+          email: document.getElementById('email').value, phone: document.getElementById('phone').value, 
+          first_name: document.getElementById('fname').value, last_name: document.getElementById('lname').value, 
+          address1: document.getElementById('address').value, city: document.getElementById('city').value, 
+          state: document.getElementById('state').value, postcode: document.getElementById('zip').value, 
+          country: document.getElementById('country').value, zip: document.getElementById('zip').value 
+        } 
+      };
+      
       const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
       const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
 
       try {
-        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'worldpay_public_key': atob(_p), 'cus_secret_key': atob(_s), 'X-Customer-Language': navigator.language }, body: JSON.stringify(payload) });
+        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', { 
+          method: 'POST', 
+          headers: { 
+            'Content-Type': 'application/json', 
+            'worldpay_public_key': atob(_p), 
+            'cus_secret_key': atob(_s), 
+            'X-Customer-Language': navigator.language 
+          }, 
+          body: JSON.stringify(payload) 
+        });
         const result = await response.json();
         if (result.pay_url) { window.top.location.href = result.pay_url; }
         else { hideWcrLoading(); alert("Error: " + result.message); btn.disabled = false; }

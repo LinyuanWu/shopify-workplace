@@ -23,5 +23,8 @@
   "toggle_show": "주문 요약 보기",
   "toggle_hide": "주문 요약 숨기기",
   "mask_main": "안전하게 결제 페이지로 이동 중",
-  "mask_sub": "이 창을 닫지 마세요"
+  "mask_sub": "이 창을 닫지 마세요",
+  "placeholder_discount": "할인 코드",
+  "btn_discount_apply": "적용",
+  "summary_discount": "할인"
 }

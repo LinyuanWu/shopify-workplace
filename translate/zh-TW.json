@@ -23,5 +23,8 @@
   "toggle_show": "顯示訂單摘要",
   "toggle_hide": "隱藏訂單摘要",
   "mask_main": "正在安全跳轉至支付頁面",
-  "mask_sub": "請勿關閉或刷新此視窗"
+  "mask_sub": "請勿關閉或刷新此視窗",
+  "placeholder_discount": "折扣代碼",
+  "btn_discount_apply": "套用",
+  "summary_discount": "折扣"  
 }
