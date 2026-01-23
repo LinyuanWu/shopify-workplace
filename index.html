@@ -874,11 +874,15 @@
         await loadCartData();
 
         if (currentCart.total_discount > 0) {
-          msgEl.innerText = "Discount code applied successfully!";
-          msgEl.style.color = "#2ecc71";
+            window.appliedDiscountCode = code; 
+            window.appliedDiscountAmount = (currentCart.total_discount / 100).toFixed(2);
+            msgEl.innerText = "Discount applied!";
+            msgEl.style.color = "#2ecc71";
         } else {
-          msgEl.innerText = "Code is invalid or does not meet requirements.";
-          msgEl.style.color = "#e74c3c";
+            window.appliedDiscountCode = "";
+            window.appliedDiscountAmount = 0;
+            msgEl.innerText = "Invalid code.";
+            msgEl.style.color = "#e74c3c";
         }
         msgEl.style.display = "block";
 
