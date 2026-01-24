@@ -896,63 +896,86 @@
     }
 
 async function loadCartData() {
-    try {
-        const res = await fetch('/cart.js');
-        currentCart = await res.json();
-        
-        // --- [新增逻辑：全自动扫描折扣] ---
-        if (currentCart.total_discount > 0) {
-            // 优先找手动输入的 code，找不到就拿自动折扣的 title
-            const discountEntry = currentCart.discount_applications && currentCart.discount_applications[0];
-            if (discountEntry) {
-                window.appliedDiscountCode = discountEntry.code || discountEntry.title; // 关键：自动折扣拿 title
-                window.appliedDiscountAmount = (currentCart.total_discount / 100).toFixed(2);
-                
-                // 让前端 UI 也显示出来
-                const msgEl = document.getElementById('discount-msg');
-                if (msgEl) {
-                    msgEl.innerText = "Promotion applied: " + window.appliedDiscountCode;
-                    msgEl.style.color = "#2ecc71";
-                    msgEl.style.display = "block";
-                }
+  try {
+    const res = await fetch('/cart.js'); 
+    currentCart = await res.json();
+
+    // --- 1. [新增逻辑] 自动识别折扣 (自动券/手动券通用) ---
+    if (currentCart.total_discount > 0) {
+        const discountEntry = currentCart.discount_applications && currentCart.discount_applications[0];
+        if (discountEntry) {
+            window.appliedDiscountCode = discountEntry.code || discountEntry.title; // 自动券拿title，手动券拿code
+            window.appliedDiscountAmount = (currentCart.total_discount / 100).toFixed(2);
+            
+            const msgEl = document.getElementById('discount-msg');
+            if (msgEl) {
+                msgEl.innerText = "Applied: " + window.appliedDiscountCode;
+                msgEl.style.color = "#2ecc71";
+                msgEl.style.display = "block";
             }
-        } else {
-            // 如果购物车里没折扣，清空变量
-            window.appliedDiscountCode = "";
-            window.appliedDiscountAmount = 0;
         }
-        // ------------------------------------
-
-        renderProducts();
-        updateTotalDisplay();
-        renderPaymentMethods(currentCart.currency);
-    } catch (err) { console.error(err); }
-}
-
-function updateTotalDisplay() {
-    if (!currentCart) return;
-    const originalSubtotal = currentCart.original_total_price / 100;
-    const totalDiscount = currentCart.total_discount / 100;
-    const shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-    
-    const discountedSubtotal = currentCart.total_price / 100; 
-    const finalTotal = discountedSubtotal + shippingPrice;
-
-    document.getElementById('subtotal-val').innerText = originalSubtotal.toFixed(2);
-
-    // 只要有折扣（不论手动自动），就显示那一栏
-    if (totalDiscount > 0) {
-        document.getElementById('discount-row').style.display = 'flex';
-        document.getElementById('discount-val').innerText = '-' + totalDiscount.toFixed(2);
     } else {
-        document.getElementById('discount-row').style.display = 'none';
+        window.appliedDiscountCode = "";
+        window.appliedDiscountAmount = 0;
+        if(document.getElementById('discount-msg')) document.getElementById('discount-msg').style.display = "none";
     }
 
-    if (selectedShippingRate) document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2);
-    document.getElementById('total-val').innerText = finalTotal.toFixed(2);
-    document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
-    window.finalPayAmount = finalTotal.toFixed(2);
+    // --- 2. [原有逻辑] 渲染商品列表 (直接写在这里，不调用外部函数) ---
+    let html = '';
+    currentCart.items.forEach(item => {
+      html += `<div class="product-item">
+        <div class="product-img-wrapper">
+          <div class="product-img"><img src="${item.image}"></div>
+          <div class="product-qty-badge">${item.quantity}</div>
+        </div>
+        <div class="product-info">
+          <div style="font-weight:500;">${item.product_title}</div>
+          <div class="product-variant">${item.variant_title || ''}</div>
+        </div>
+        <div class="product-price">${(item.final_line_price / 100).toFixed(2)} ${currentCart.currency}</div>
+      </div>`;
+    });
+    document.getElementById('product-list').innerHTML = html;
+
+    // --- 3. [原有逻辑] 更新 UI 显示 ---
+    document.getElementById('currency-tag').innerText = currentCart.currency;
+    renderPaymentMethods(currentCart.currency); 
+    updateTotalDisplay();
+
+  } catch (err) {
+    console.error("Cart rendering error:", err);
+  }
 }
+
+    function updateTotalDisplay() {
+      if (!currentCart) return;
+      
+      const originalSubtotal = currentCart.original_total_price / 100;
+      const totalDiscount = currentCart.total_discount / 100;
+      let shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+      
+      // 实付金额 = (原价 - 折扣) + 运费
+      const discountedSubtotal = currentCart.total_price / 100; 
+      const finalTotal = discountedSubtotal + shippingPrice;
+
+      // 更新显示
+      document.getElementById('subtotal-val').innerText = originalSubtotal.toFixed(2) + " " + currentCart.currency;
+      
+      if (totalDiscount > 0) {
+        document.getElementById('discount-row').style.display = 'flex';
+        document.getElementById('discount-val').innerText = '-' + totalDiscount.toFixed(2) + " " + currentCart.currency;
+      } else {
+        document.getElementById('discount-row').style.display = 'none';
+      }
+
+      if (selectedShippingRate) {
+        document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currentCart.currency;
+      }
+
+      document.getElementById('total-val').innerText = finalTotal.toFixed(2);
+      document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currentCart.currency;
+      window.finalPayAmount = finalTotal.toFixed(2);
+    }
 
     async function fetchShippingRates() {
       const country = document.getElementById('country').value, 
