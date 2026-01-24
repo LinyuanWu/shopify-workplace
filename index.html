@@ -4,18 +4,18 @@
 <head>
   <!-- 
     ============================================================================
-    SECURITY LAYER: PROTECTING INTELLECTUAL PROPERTY & DATA
+    SECURITY LAYER: PROTECTING INTELLECTUAL PROPERTY & DATA INTEGRITY
     ============================================================================
   -->
   <script type="text/javascript">
     /**
-     * 安全防护层：禁止调试、右键及非法截取
+     * 安全防护层：禁止调试、右键及非法代码提取
      */
     (function () {
-      // 禁用右键菜单，防止查看元素
+      // 禁用右键，防止查看源代码
       document.addEventListener('contextmenu', e => e.preventDefault());
 
-      // 禁用 F12, Ctrl+Shift+I, Ctrl+U 等开发者常用快捷键
+      // 禁用 F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S 等快捷键
       document.onkeydown = function (e) {
         if (e.keyCode === 123 || 
           (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
@@ -26,7 +26,7 @@
       };
 
       /**
-       * 页面自毁逻辑：防止在非受控环境下运行或调试
+       * 页面自毁逻辑：检测到异常调试环境时立即执行
        */
       function killPage() {
         document.body.innerHTML = "";
@@ -34,7 +34,7 @@
       }
 
       /**
-       * 开发者工具检测逻辑
+       * 开发者工具检测引擎
        */
       function detectDevTools() {
         const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
@@ -69,11 +69,11 @@
 
   <!-- 
     ============================================================================
-    CSS DESIGN SYSTEM: MODERN & CLEAN LAYOUT
+    CSS DESIGN SYSTEM: PREMIUM CHECKOUT UI
     ============================================================================
   -->
   <style>
-    /* === Global Reset === */
+    /* === Global Foundations === */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #fff;
@@ -95,7 +95,7 @@
       min-height: 100vh;
     }
 
-    /* === Left Column: Checkout Forms === */
+    /* === Left Column Layout === */
     .form-section {
       flex: 1.2;
       padding: 40px;
@@ -154,7 +154,7 @@
       box-shadow: 0 0 0 1px #2b5ef8;
     }
 
-    /* === Payment Selection Grid === */
+    /* === Payment Method Grid === */
     .payment-list {
       display: flex;
       flex-direction: column;
@@ -210,29 +210,7 @@
       image-rendering: -webkit-optimize-contrast;
     }
 
-    /* === Shipping Method Styles === */
-    .shipping-method-item {
-      display: flex;
-      align-items: center;
-      padding: 15px;
-      border: 1px solid #d9d9d9;
-      border-radius: 5px;
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-
-    .shipping-method-item.selected {
-      border-color: #2b5ef8;
-      background-color: #f9fdfa;
-    }
-
-    .shipping-method-item input {
-      margin-right: 15px;
-      width: auto;
-      accent-color: #2b5ef8;
-    }
-
-    /* === Right Column: Order Summary === */
+    /* === Right Column Summary === */
     .summary-section {
       flex: 0.8;
       background: #fafafa;
@@ -277,10 +255,6 @@
       font-size: 18px;
       font-weight: 600;
       color: #333;
-    }
-
-    .mobile-summary-toggle.expanded .toggle-chevron {
-      transform: rotate(180deg);
     }
 
     .summary-content {
@@ -347,12 +321,6 @@
       line-height: 1.4;
     }
 
-    .product-variant {
-      font-size: 12px;
-      color: #717171;
-      font-weight: 400;
-    }
-
     .product-price {
       font-size: 14px;
       font-weight: 500;
@@ -393,59 +361,10 @@
       font-size: 12px;
       color: #717171;
       margin-left: 5px;
-      font-weight: 400;
       vertical-align: middle;
     }
 
-    /* === Action Buttons === */
-    button#submit-btn {
-      width: 100%;
-      padding: 18px;
-      background: #3e6cf5;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 30px;
-      transition: background 0.3s ease;
-    }
-
-    button#submit-btn:hover {
-      background: #1650FF;
-    }
-
-    button#submit-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    /* === Language Switcher Section === */
-    .lang-switcher-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      margin-bottom: 15px;
-    }
-
-    .lang-switcher-wrapper select {
-      width: auto;
-      padding: 6px 10px;
-      font-size: 13px;
-      border: 1px solid #d9d9d9;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #fff;
-    }
-
-    .pc-lang-switcher {
-      margin-top: 25px;
-      border-top: 1px solid #e1e1e1;
-      padding-top: 15px;
-    }
-
-    /* === Discount Module Styles === */
+    /* === Discount Module & Tags === */
     .discount-input-wrapper {
       display: flex;
       gap: 10px;
@@ -468,29 +387,48 @@
       transition: all 0.2s;
     }
 
-    .btn-apply:hover {
-      background: #e5e5e5;
+    .btn-apply:hover { background: #e5e5e5; }
+
+    /* 应用后的优惠券标签 (类似 Shopify 原生) */
+    .coupon-tag-container {
+      display: none; /* Controlled by JS */
+      margin-bottom: 15px;
     }
 
+    .applied-coupon-tag {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f1f1;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .tag-icon {
+      margin-right: 6px;
+      width: 14px;
+      height: 14px;
+      fill: #717171;
+    }
+
+    .remove-coupon-btn {
+      margin-left: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #717171;
+      font-size: 16px;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .remove-coupon-btn:hover { color: #333; }
+
     .discount-line-item {
-      display: none; /* Controlled by JS */
+      display: none;
       justify-content: space-between;
       margin-top: 12px;
       font-size: 14px;
       color: #333;
-    }
-
-    .discount-detail-label {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .discount-code-tag {
-      font-size: 12px;
-      color: #717171;
-      margin-top: 2px;
-      display: flex;
-      align-items: center;
     }
 
     .price-original {
@@ -500,23 +438,13 @@
       margin-right: 5px;
     }
 
-    .product-discount-badge {
-      display: flex;
-      align-items: center;
-      font-size: 11px;
-      color: #717171;
-      margin-top: 5px;
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-
     .savings-summary-box {
       margin-top: 15px;
       padding: 12px;
       background: #f4f4f4;
       border: 1px solid #e1e1e1;
       border-radius: 4px;
-      display: none; /* Controlled by JS */
+      display: none;
       align-items: center;
       font-weight: 600;
       font-size: 15px;
@@ -528,6 +456,47 @@
       height: 18px;
       margin-right: 10px;
       fill: #333;
+    }
+
+    /* === Global Action Button === */
+    button#submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: #3e6cf5;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 30px;
+      transition: background 0.3s ease;
+    }
+
+    button#submit-btn:hover { background: #1650FF; }
+
+    /* === Language Section === */
+    .lang-switcher-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+
+    .lang-switcher-wrapper select {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 13px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .pc-lang-switcher {
+      margin-top: 25px;
+      border-top: 1px solid #e1e1e1;
+      padding-top: 15px;
     }
 
     /* === Loader Mask === */
@@ -555,7 +524,6 @@
       align-items: center;
       max-width: 90%;
       width: 350px;
-      text-align: center;
     }
 
     .wcr-a-spinner {
@@ -573,17 +541,10 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* === Mobile Adaptability === */
+    /* === Mobile Optimization === */
     @media (max-width: 900px) {
-      .main-container {
-        flex-direction: column-reverse;
-      }
-
-      .form-section {
-        padding: 25px;
-        border-right: none;
-      }
-
+      .main-container { flex-direction: column-reverse; }
+      .form-section { padding: 25px; border-right: none; }
       .summary-section {
         padding: 0;
         background: #fafafa;
@@ -594,42 +555,13 @@
         z-index: 999;
         box-shadow: 0 4px 10px rgba(0,0,0,0.06);
       }
-
-      .mobile-summary-toggle {
-        display: flex;
-      }
-
-      .summary-content {
-        display: none;
-        padding: 20px;
-        border-bottom: 1px solid #e1e1e1;
-        max-height: 70vh;
-        overflow-y: auto;
-      }
-
-      .summary-content.show {
-        display: block;
-      }
-
-      .pc-lang-switcher {
-        display: none;
-      }
+      .mobile-summary-toggle { display: flex; }
+      .summary-content { display: none; padding: 20px; border-bottom: 1px solid #e1e1e1; }
+      .summary-content.show { display: block; }
+      .pc-lang-switcher { display: none; }
     }
 
-    .trust-badges {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 25px;
-      margin-top: 25px;
-      margin-bottom: 15px;
-    }
-
-    .trust-badges img {
-      height: 38px;
-      width: auto;
-      opacity: 0.85;
-    }
+    .trust-badges img { height: 38px; opacity: 0.85; margin: 0 10px; }
   </style>
 </head>
 
@@ -710,9 +642,9 @@
 
         <button type="submit" id="submit-btn" data-i18n="btn_place_order">PLACE ORDER</button>
 
-        <div class="trust-badges">
-          <img src="https://image.defitopay.com/worldgate.svg" alt="Secured by WorldGate">
-          <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS Compliant">
+        <div class="trust-badges" style="display:flex; justify-content:center; margin-top:20px;">
+          <img src="https://image.defitopay.com/worldgate.svg" alt="WorldGate">
+          <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS">
         </div>
       </form>
     </div>
@@ -721,13 +653,9 @@
     <div class="summary-section">
       <div class="mobile-summary-toggle" id="summaryToggle">
         <div class="toggle-left">
-          <svg viewBox="0 0 20 20">
-            <path d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z"></path>
-          </svg>
+          <svg viewBox="0 0 20 20"><path d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z"></path></svg>
           <span id="toggleText" data-i18n="toggle_show">Show order summary</span>
-          <svg class="toggle-chevron" viewBox="0 0 10 7" style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px; margin-left: 6px;">
-            <path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+          <svg class="toggle-chevron" viewBox="0 0 10 7" style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px; margin-left: 6px;"><path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </div>
         <div class="toggle-total" id="mobile-total-display">$0.00</div>
       </div>
@@ -735,9 +663,18 @@
       <div class="summary-content" id="summaryContent">
         <div id="product-list" class="product-list"></div>
 
+        <!-- DISCOUNT INPUT & TAG -->
         <div class="discount-input-wrapper">
           <input type="text" id="coupon-input" placeholder="Discount code or gift card">
           <button type="button" class="btn-apply" id="apply-coupon-btn" onclick="applyDiscount()">Apply</button>
+        </div>
+
+        <div id="coupon-tag-area" class="coupon-tag-container">
+          <div class="applied-coupon-tag">
+            <svg class="tag-icon" viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
+            <span id="applied-code-text"></span>
+            <span class="remove-coupon-btn" onclick="removeDiscount()">✕</span>
+          </div>
         </div>
 
         <div class="summary-line">
@@ -788,16 +725,14 @@
       <div class="wcr-a-spinner"></div>
       <div class="wcr-a-text">
         <div class="main-msg" data-i18n="mask_main">Securely launching payment</div>
-        <div class="sub-msg" style="font-size: 14px; color: #2ecc71; font-weight: normal; margin-top: 5px;" data-i18n="mask_sub">
-          Please do not exit or close this window
-        </div>
+        <div class="sub-msg" style="font-size: 14px; color: #2ecc71; font-weight: normal; margin-top: 5px;" data-i18n="mask_sub">Please do not exit window</div>
       </div>
     </div>
   </div>
 
   <script>
     /**
-     * CORE STATE MANAGEMENT
+     * STATE MANAGEMENT
      */
     let currentCart = null;
     let selectedShippingRate = null;
@@ -814,68 +749,53 @@
         const res = await fetch(`${BASE_URL}/translate/${lang}.json?v=${cacheBuster}`);
         if (!res.ok) return;
         const trans = await res.json();
-
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (trans[key]) el.textContent = trans[key];
         });
-
         const placeholders = { 'email': 'placeholder_email', 'address': 'placeholder_address', 'phone': 'placeholder_phone' };
         for (let id in placeholders) {
           const el = document.getElementById(id);
           if (el && trans[placeholders[id]]) el.placeholder = trans[placeholders[id]];
         }
-
         document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
         localStorage.setItem('preferred_lang', lang);
-      } catch (e) { console.error('i18n load error'); }
+      } catch (e) { console.error('i18n error'); }
     }
 
     /**
-     * DATA SYNC & DISPLAY ENGINE
+     * DATA SYNC ENGINE
      */
     async function loadCartData() {
       try {
         const res = await fetch('/cart.js');
         currentCart = await res.json();
-        
-        // Extract Cart-Level Discounts (like Manual Coupons)
         currentAppliedDiscounts = currentCart.cart_level_discount_applications || [];
-        
         document.getElementById('currency-tag').innerText = currentCart.currency;
         renderPaymentMethods(currentCart.currency); 
         updateTotalDisplay();
-      } catch (err) { console.error("Cart loading failed", err); }
+      } catch (err) { console.error("Load cart failed", err); }
     }
 
     function updateTotalDisplay() {
       if (!currentCart) return;
       
       const currency = currentCart.currency;
-      let totalSavings = 0;
+      let lineTotalSavings = 0;
       let productHtml = '';
-      
-      // Store potential automatic discount title from line levels
-      let automaticDiscountTitle = "";
+      let autoDiscountName = "";
 
       currentCart.items.forEach(item => {
-        // Line-level original vs final
-        const originalLinePrice = item.original_line_price / 100;
-        const finalLinePrice = item.final_line_price / 100;
-        const lineDiscount = originalLinePrice - finalLinePrice;
-        totalSavings += lineDiscount;
+        const originalLine = item.original_line_price / 100;
+        const finalLine = item.final_line_price / 100;
+        const lineDiscount = originalLine - finalLine;
+        lineTotalSavings += lineDiscount;
 
         let badges = '';
         if (item.line_level_discount_allocations && item.line_level_discount_allocations.length > 0) {
           item.line_level_discount_allocations.forEach(allocation => {
-            badges += `
-              <div class="product-discount-badge">
-                [${allocation.discount_application.title}] -${(allocation.amount/100).toFixed(2)} ${currency}
-              </div>`;
-            // Capture the first automatic discount title we find
-            if (!automaticDiscountTitle) {
-              automaticDiscountTitle = allocation.discount_application.title;
-            }
+            badges += `<div class="product-discount-badge">[${allocation.discount_application.title}] -${(allocation.amount/100).toFixed(2)} ${currency}</div>`;
+            if (!autoDiscountName) autoDiscountName = allocation.discount_application.title;
           });
         }
 
@@ -891,15 +811,14 @@
               ${badges}
             </div>
             <div class="product-price">
-              ${lineDiscount > 0 ? `<span class="price-original">${originalLinePrice.toFixed(2)}</span>` : ''}
-              <span class="price-current">${finalLinePrice.toFixed(2)} ${currency}</span>
+              ${lineDiscount > 0 ? `<span class="price-original">${originalLine.toFixed(2)}</span>` : ''}
+              <span class="price-current">${finalLine.toFixed(2)} ${currency}</span>
             </div>
           </div>`;
       });
       document.getElementById('product-list').innerHTML = productHtml;
 
-      // Calculate absolute totals
-      const totalDiscountAmount = (currentCart.total_discount / 100);
+      const totalDiscount = (currentCart.total_discount / 100);
       const subtotalPostDiscount = (currentCart.total_price / 100);
       const shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
       const finalGrandTotal = subtotalPostDiscount + shippingPrice;
@@ -908,28 +827,38 @@
       
       const discountRow = document.getElementById('discount-row');
       const savingsBox = document.getElementById('savings-summary-box');
+      const tagArea = document.getElementById('coupon-tag-area');
 
-      if (totalDiscountAmount > 0) {
+      if (totalDiscount > 0) {
         discountRow.style.display = 'flex';
-        document.getElementById('discount-val').innerText = "- " + totalDiscountAmount.toFixed(2) + " " + currency;
+        document.getElementById('discount-val').innerText = "- " + totalDiscount.toFixed(2) + " " + currency;
         
-        // Priority: Cart-level code title > Line-level automatic title
-        let mainTitle = automaticDiscountTitle;
+        let mainTitle = autoDiscountName;
+        let isManualCode = false;
+        
         if (currentAppliedDiscounts.length > 0) {
            mainTitle = currentAppliedDiscounts[0].title;
+           // If Shopify identifies it as a code-based application
+           isManualCode = (currentAppliedDiscounts[0].type === 'discount_code');
         }
         
-        document.getElementById('discount-detail-text').innerText = mainTitle || "Automatic Discount";
+        document.getElementById('discount-detail-text').innerText = mainTitle || "Discount";
         
+        // Update the 'X' Tag Area (Only show for manual codes or if needed for automatic rules)
+        if (mainTitle) {
+          tagArea.style.display = 'block';
+          document.getElementById('applied-code-text').innerText = mainTitle;
+        }
+
         savingsBox.style.display = 'flex';
-        document.getElementById('total-savings-val').innerText = totalDiscountAmount.toFixed(2) + " " + currency;
+        document.getElementById('total-savings-val').innerText = totalDiscount.toFixed(2) + " " + currency;
         
-        // Set global variables for final submission
-        window.finalDiscountCode = mainTitle || "Automatic Discount";
-        window.finalDiscountVal = totalDiscountAmount.toFixed(2);
+        window.finalDiscountCode = mainTitle;
+        window.finalDiscountVal = totalDiscount.toFixed(2);
       } else {
         discountRow.style.display = 'none';
         savingsBox.style.display = 'none';
+        tagArea.style.display = 'none';
         window.finalDiscountCode = "";
         window.finalDiscountVal = 0;
       }
@@ -946,125 +875,95 @@
     }
 
     /**
-     * MANUAL DISCOUNT APPLICATION
+     * DISCOUNT ACTIONS
      */
     window.applyDiscount = async function() {
       const codeInput = document.getElementById('coupon-input');
       const code = codeInput.value.trim();
       if (!code) return;
-
       const btn = document.getElementById('apply-coupon-btn');
-      btn.innerText = "Applying...";
+      btn.innerText = "...";
       btn.disabled = true;
-
       try {
         await fetch(`/discount/${encodeURIComponent(code)}`);
         await loadCartData();
         codeInput.value = "";
-      } catch (e) {
-        alert("Coupon application failed.");
-      } finally {
-        btn.innerText = "Apply";
-        btn.disabled = false;
-      }
+      } catch (e) { alert("Failed."); }
+      finally { btn.innerText = "Apply"; btn.disabled = false; }
+    };
+
+    window.removeDiscount = async function() {
+      // Shopify uses /discount/ to clear when empty, or /discount/CLEAR
+      try {
+        await fetch(`/discount/CLEAR`);
+        await loadCartData();
+      } catch (e) { console.error("Clear failed"); }
     };
 
     /**
-     * SHIPPING RATE CALCULATION
+     * SHIPPING & PAYMENT LOGIC
      */
     async function fetchShippingRates() {
       const country = document.getElementById('country').value;
       const state = document.getElementById('state').value;
       const zip = document.getElementById('zip').value;
-      
       if (!zip || zip.length < 3 || !country) return;
-
       const listDiv = document.getElementById('shipping-rates-list');
       document.getElementById('shipping-method-area').style.display = 'block';
-      listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Finding rates...</div>";
-
+      listDiv.innerHTML = "<div style='padding:10px;'>Finding rates...</div>";
       try {
         const query = `shipping_address[zip]=${encodeURIComponent(zip)}&shipping_address[country]=${encodeURIComponent(country)}&shipping_address[province]=${encodeURIComponent(state)}`;
         const res = await fetch(`/cart/shipping_rates.json?${query}`);
         const data = await res.json();
-        
         availableShippingRates = data.shipping_rates;
         if (availableShippingRates && availableShippingRates.length > 0) {
           let html = '';
           availableShippingRates.forEach((rate, index) => {
             if (index === 0) selectedShippingRate = rate;
             const isSelected = index === 0;
-            html += `
-              <div class="shipping-method-item ${isSelected ? 'selected' : ''}" onclick="selectShipping(${index})">
-                <input type="radio" name="sh_radio" ${isSelected ? 'checked' : ''}>
-                <div style="flex:1;">${rate.name}</div>
-                <div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div>
-              </div>`;
+            html += `<div class="shipping-method-item ${isSelected ? 'selected' : ''}" onclick="selectShipping(${index})"><input type="radio" name="sh_radio" ${isSelected ? 'checked' : ''}><div style="flex:1;">${rate.name}</div><div style="font-weight:bold;">${rate.price}</div></div>`;
           });
           listDiv.innerHTML = html;
           updateTotalDisplay();
-        } else {
-          listDiv.innerHTML = "<div style='padding:10px; color:red;'>No shipping rates available.</div>";
         }
-      } catch (err) {
-        listDiv.innerHTML = "Error loading shipping rates.";
-      }
+      } catch (err) { listDiv.innerHTML = "Error."; }
     }
 
     window.selectShipping = function(index) {
       selectedShippingRate = availableShippingRates[index];
       const items = document.querySelectorAll('.shipping-method-item');
-      items.forEach((el, i) => {
-        if (i === index) el.classList.add('selected');
-        else el.classList.remove('selected');
-      });
+      items.forEach((el, i) => { if (i === index) el.classList.add('selected'); else el.classList.remove('selected'); });
       updateTotalDisplay();
     };
 
-    /**
-     * GATEWAY LOGIC
-     */
     const shopifyOption = { id: 'shopify_checkout', name: 'Shopify Secure Checkout', icon: 'https://image.defitopay.com/global_pay.svg' };
-    const currencyPaymentMap = {
-      'USD': [shopifyOption],
-      'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, shopifyOption],
-      'DEFAULT': [shopifyOption]
-    };
+    const currencyPaymentMap = { 'USD': [shopifyOption], 'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, shopifyOption], 'DEFAULT': [shopifyOption] };
 
     function renderPaymentMethods(currency) {
       const container = document.getElementById('payment-container');
       const methods = currencyPaymentMap[currency] || currencyPaymentMap['DEFAULT'];
       let html = '';
       methods.forEach((m, index) => {
-        const isChecked = index === 0;
-        if (isChecked) document.getElementById('gateway').value = m.id;
-        html += `
-          <label class="payment-option ${isChecked ? 'selected' : ''}" onclick="selectPayment(this, '${m.id}')">
-            <input type="radio" name="payment_radio" ${isChecked ? 'checked' : ''}>
-            <div class="payment-name">${m.name}</div>
-            <img src="${m.icon}" alt="${m.name}" class="payment-icon">
-          </label>`;
+        const isChecked = index === 0; if (isChecked) document.getElementById('gateway').value = m.id;
+        html += `<label class="payment-option ${isChecked ? 'selected' : ''}" onclick="selectPayment(this, '${m.id}')"><input type="radio" name="payment_radio" ${isChecked ? 'checked' : ''}><div class="payment-name">${m.name}</div><img src="${m.icon}" class="payment-icon"></label>`;
       });
       container.innerHTML = html;
     }
 
     window.selectPayment = function (el, gatewayId) {
       document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-      el.classList.add('selected');
-      el.querySelector('input').checked = true;
+      el.classList.add('selected'); el.querySelector('input').checked = true;
       document.getElementById('gateway').value = gatewayId;
     };
 
     /**
-     * SUBMISSION & PAYLOAD DELIVERY
+     * SUBMISSION LOGIC
      */
     document.getElementById('payment-form').onsubmit = async function(e) {
       e.preventDefault();
       const gateway = document.getElementById('gateway').value;
       if (!gateway) return;
-
       document.getElementById('wcr-a-payment-loader').style.display = 'flex';
-
       if (gateway === 'shopify_checkout') {
         const p = new URLSearchParams();
         const map = { 'checkout[email]': 'email', 'checkout[shipping_address][first_name]': 'fname', 'checkout[shipping_address][last_name]': 'lname', 'checkout[shipping_address][address1]': 'address', 'checkout[shipping_address][city]': 'city', 'checkout[shipping_address][country]': 'country', 'checkout[shipping_address][province]': 'state', 'checkout[shipping_address][zip]': 'zip', 'checkout[shipping_address][phone]': 'phone' };
@@ -1072,63 +971,25 @@
         window.top.location.href = '/checkout?' + p.toString();
         return;
       }
-
       const payload = {
         order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000).toString(),
-        total_amount: window.finalPayAmount,
-        currency: currentCart.currency,
-        gateway_mask: gateway,
-        origin_domain: window.location.host,
-        return_url: window.location.origin + "/pages/thank-you",
+        total_amount: window.finalPayAmount, currency: currentCart.currency, gateway_mask: gateway,
+        origin_domain: window.location.host, return_url: window.location.origin + "/pages/thank-you",
         hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update",
-        
-        // SYNC AUTOMATIC OR MANUAL DISCOUNT NAME
         discount_code: window.finalDiscountCode || "",
         discount_amount: window.finalDiscountVal || 0,
-        
-        // CRITICAL: Send original_price to line_items so Shopify can apply the discount accurately
-        line_items: currentCart.items.map(i => ({
-          variant_id: i.variant_id,
-          quantity: i.quantity,
-          title: i.title,
-          price: (i.original_price / 100).toFixed(2) 
-        })),
-        
+        line_items: currentCart.items.map(i => ({ variant_id: i.variant_id, quantity: i.quantity, title: i.title, price: (i.original_price / 100).toFixed(2) })),
         shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [],
-        billing: {
-          email: document.getElementById('email').value,
-          phone: document.getElementById('phone').value,
-          first_name: document.getElementById('fname').value,
-          last_name: document.getElementById('lname').value,
-          address1: document.getElementById('address').value,
-          city: document.getElementById('city').value,
-          state: document.getElementById('state').value,
-          postcode: document.getElementById('zip').value,
-          country: document.getElementById('country').value
-        }
+        billing: { email: document.getElementById('email').value, phone: document.getElementById('phone').value, first_name: document.getElementById('fname').value, last_name: document.getElementById('lname').value, address1: document.getElementById('address').value, city: document.getElementById('city').value, state: document.getElementById('state').value, postcode: document.getElementById('zip').value, country: document.getElementById('country').value }
       };
-
       const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
       const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
-
       try {
-        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'worldpay_public_key': atob(_p),
-            'cus_secret_key': atob(_s),
-            'X-Customer-Language': navigator.language
-          },
-          body: JSON.stringify(payload)
-        });
+        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'worldpay_public_key': atob(_p), 'cus_secret_key': atob(_s), 'X-Customer-Language': navigator.language }, body: JSON.stringify(payload) });
         const result = await response.json();
         if (result.pay_url) window.top.location.href = result.pay_url;
         else { document.getElementById('wcr-a-payment-loader').style.display = 'none'; alert("Error: " + result.message); }
-      } catch (err) {
-        document.getElementById('wcr-a-payment-loader').style.display = 'none';
-        alert("System error. Please try again.");
-      }
+      } catch (err) { document.getElementById('wcr-a-payment-loader').style.display = 'none'; alert("System error."); }
     };
 
     /**
@@ -1136,31 +997,16 @@
      */
     function initCountries() {
       const select = document.getElementById('country');
-      allCountries.forEach(c => {
-        const op = document.createElement('option');
-        op.value = c.code; op.innerText = c.name;
-        select.appendChild(op);
-      });
+      const allCountries = [{ code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "TW", name: "Taiwan" }];
+      allCountries.forEach(c => { const op = document.createElement('option'); op.value = c.code; op.innerText = c.name; select.appendChild(op); });
     }
 
-    const allCountries = [{ code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "TW", name: "Taiwan" }];
-
     document.addEventListener('DOMContentLoaded', () => {
-      initCountries();
-      loadCartData();
-      
+      initCountries(); loadCartData();
       const toggle = document.getElementById('summaryToggle');
       const content = document.getElementById('summaryContent');
-      toggle.onclick = () => {
-        content.classList.toggle('show');
-        toggle.classList.toggle('expanded');
-      };
-
-      ['zip', 'state', 'country'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('change', fetchShippingRates);
-      });
-
+      toggle.onclick = () => { content.classList.toggle('show'); toggle.classList.toggle('expanded'); };
+      ['zip', 'state', 'country'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', fetchShippingRates); });
       const savedLang = localStorage.getItem('preferred_lang');
       const browserLang = navigator.language.split('-')[0];
       const targetLang = savedLang || (['ja','ko','zh'].includes(browserLang) ? (browserLang === 'zh' ? 'zh-TW' : browserLang) : 'en');
