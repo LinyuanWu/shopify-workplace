@@ -1,9 +1,10 @@
+V66.0
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <!-- 
-    api 地址一定要检查线上和线下环境
-    worker page 地址一定要检查线上和线下环境,搜索关键词  .dev
     ============================================================================
     SECURITY LAYER: PROTECTING INTELLECTUAL PROPERTY & TRANSACTION INTEGRITY
     ============================================================================
@@ -285,7 +286,7 @@
 
     .toggle-chevron {
       margin-left: 6px;
-      transition: transform 0.3s ease;
+      transition: transform(0.3s) ease;
     }
 
     .toggle-total {
@@ -1089,7 +1090,6 @@
       if (!code) return;
 
       const btn = document.getElementById('apply-coupon-btn');
-      // Store original text for restoration
       const originalBtnText = btn.innerText;
       btn.innerText = "...";
       btn.disabled = true;
@@ -1110,18 +1110,30 @@
 
     /**
      * ACTION: REMOVE DISCOUNT (THE 'X' FEATURE)
+     * Modified to use a cleaner clear-redirect with sync delay
      */
     window.removeDiscount = async function() {
-      const tagArea = document.getElementById('coupon-tag-area');
-      const btn = document.querySelector('.remove-coupon-btn');
+      const btn = document.getElementById('apply-coupon-btn');
+      const originalBtnText = btn.innerText;
       
       try {
-        // Applying an empty discount code or CLEAR usually resets the shopify checkout state
-        await fetch(`/discount/CLEAR`);
-        // Force refresh to synchronize with Shopify backend logic
+        btn.innerText = "...";
+        btn.disabled = true;
+
+        // 1. Use the Shopify clearing endpoint by calling /discount/ with no code
+        // and adding a cache buster.
+        await fetch(`/discount/?clear_discount=1&v=${Date.now()}`);
+
+        // 2. Crucial: Wait for Shopify backend to commit session changes (500ms)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // 3. Force refresh to synchronize with Shopify backend logic
         await loadCartData();
       } catch (e) {
-        console.error("Discount removal failed");
+        console.error("Discount removal failed", e);
+      } finally {
+        btn.innerText = originalBtnText;
+        btn.disabled = false;
       }
     };
 
