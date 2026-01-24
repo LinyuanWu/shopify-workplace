@@ -560,75 +560,101 @@
       opacity: 1;
     }
 
-/* === 优惠券相关样式 === */
-    .discount-input-wrapper {
-      display: flex;
-      gap: 10px;
-      margin: 20px 0;
-    }
-    .discount-input-wrapper input {
-      flex: 1;
-      margin-bottom: 0;
-    }
-    .btn-apply {
-      padding: 0 20px;
-      background: #f1f1f1;
-      border: 1px solid #d9d9d9;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: 500;
-      color: #333;
-    }
-    .btn-apply:hover { background: #e5e5e5; }
+/* ============================================================
+   优惠券与自动折扣增强样式 (包含第一步和第二步的所有样式)
+   ============================================================ */
 
-    .applied-coupon-tag {
-      display: inline-flex;
-      align-items: center;
-      background: #f1f1f1;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #333;
-      margin-top: 10px;
-    }
-    .coupon-icon {
-      margin-right: 6px;
-      width: 14px;
-      height: 14px;
-      fill: #717171;
-    }
-    .remove-coupon {
-      margin-left: 8px;
-      cursor: pointer;
-      color: #717171;
-      font-weight: bold;
-    }
+/* 1. 优惠券输入框区域 */
+.discount-input-wrapper {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+.discount-input-wrapper input {
+  flex: 1;
+  margin-bottom: 0 !important; /* 强制对齐 */
+}
+.btn-apply {
+  padding: 0 20px;
+  background: #f1f1f1;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #333;
+  transition: background 0.2s;
+}
+.btn-apply:hover { background: #e5e5e5; }
 
-    .discount-line {
-      color: #333;
-      display: none; /* 默认隐藏，有优惠时显示 */
-    }
-    .discount-line .discount-val {
-      color: #333;
-    }
+/* 2. 已应用的优惠券标签 (带 X 号) */
+.applied-coupon-tag {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f1f1;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  margin-bottom: 15px;
+}
+.coupon-icon {
+  margin-right: 6px;
+  width: 14px;
+  height: 14px;
+  fill: #717171;
+}
+.remove-coupon {
+  margin-left: 8px;
+  cursor: pointer;
+  color: #717171;
+  font-weight: bold;
+}
 
-    .savings-box {
-      margin-top: 15px;
-      padding: 12px;
-      background: #f4f4f4;
-      border: 1px solid #e1e1e1;
-      border-radius: 4px;
-      display: none; /* 默认隐藏 */
-      align-items: center;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    .savings-box svg {
-      width: 16px;
-      height: 16px;
-      margin-right: 8px;
-      fill: #333;
-    }
+/* 3. 商品价格划线与高亮 (还原 Shopify 效果) */
+.price-original {
+  text-decoration: line-through;
+  color: #717171;
+  font-size: 12px;
+  margin-right: 5px;
+}
+.price-current {
+  color: #333;
+  font-weight: 600;
+}
+
+/* 4. 商品名称下方的折扣详情小标签 */
+.product-discount-badge {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: #717171;
+  margin-top: 5px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.product-discount-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: #717171;
+  margin-right: 4px;
+}
+
+/* 5. 底部总节省 (TOTAL SAVINGS) 区域 */
+.savings-summary {
+  margin-top: 15px;
+  padding: 10px 0;
+  display: none; /* 有优惠时由 JS 控制显示 */
+  align-items: center;
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+}
+.savings-summary svg {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
 
   </style>
 </head>
@@ -900,31 +926,30 @@
       return null;
     }
 
+    // 处理手动输入优惠券：通过 Shopify 路径应用，由 Shopify 后台校验
     window.applyDiscount = async function() {
-      const input = document.getElementById('coupon-input');
-      const code = input.value.trim();
+      const code = document.getElementById('coupon-input').value.trim();
       if (!code) return;
 
       const btn = document.getElementById('apply-coupon-btn');
-      btn.innerText = "Applying...";
-      
-      const config = await validateCouponFromBackend(code);
-      
-      if (config) {
-        currentDiscount.code = config.code;
-        currentDiscount.type = config.type;
-        currentDiscount.value = config.value;
-        currentDiscount.min_qty = config.min_qty || 0;
+      btn.innerText = "Checking...";
+
+      try {
+        // 关键：将优惠券发送到 Shopify 的折扣处理接口
+        // 这会让 Shopify 后台执行冲突检查（自动折扣 vs 优惠码）
+        await fetch(`/discount/${code}`);
         
-        document.getElementById('applied-code-text').innerText = config.code;
-        document.getElementById('coupon-tag-area').style.display = 'block';
-        input.value = "";
-        updateTotalDisplay();
-      } else {
-        alert("Invalid discount code");
+        // 重新加载购物车数据，看看 Shopify 后台最终决定应用哪个折扣
+        await loadCartData();
+        
+        document.getElementById('coupon-input').value = "";
+      } catch (e) {
+        alert("Apply discount failed");
+      } finally {
+        btn.innerText = "Apply";
       }
-      btn.innerText = "Apply";
     };
+
 
     window.removeDiscount = function() {
       currentDiscount = { code: "", type: "none", value: 0, amount: 0 };
@@ -985,15 +1010,20 @@
 
     async function loadCartData() {
       try {
-        const res = await fetch('/cart.js'); currentCart = await res.json();
-        let html = '';
-        currentCart.items.forEach(item => {
-          html += `<div class="product-item"><div class="product-img-wrapper"><div class="product-img"><img src="${item.image}"></div><div class="product-qty-badge">${item.quantity}</div></div><div class="product-info"><div style="font-weight:500;">${item.product_title}</div><div class="product-variant">${item.variant_title || ''}</div></div><div class="product-price">${(item.final_line_price / 100).toFixed(2)} ${currentCart.currency}</div></div>`;
-        });
-        document.getElementById('product-list').innerHTML = html;
+        // 1. 获取 Shopify 最新的购物车状态
+        const res = await fetch('/cart.js');
+        currentCart = await res.json();
+        
+        // 2. 提取订单级别的折扣应用 (例如自动折扣规则名称)
+        currentAppliedDiscounts = currentCart.cart_level_discount_applications || [];
+        
+        // 3. 渲染页面
         document.getElementById('currency-tag').innerText = currentCart.currency;
-        renderPaymentMethods(currentCart.currency); updateTotalDisplay();
-      } catch (err) { }
+        renderPaymentMethods(currentCart.currency); 
+        updateTotalDisplay();
+      } catch (err) {
+        console.error("Failed to load shopify cart data", err);
+      }
     }
 
     async function fetchShippingRates() {
@@ -1024,54 +1054,80 @@
     };
 
     function updateTotalDisplay() {
-          if (!currentCart) return;
-          const subtotal = currentCart.total_price / 100;
-          let shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-          
-          // --- 计算折扣 ---
-          let discountAmount = 0;
-          const totalQty = currentCart.items.reduce((acc, item) => acc + item.quantity, 0);
-    
-          if (currentDiscount.type === "percentage") {
-            discountAmount = subtotal * currentDiscount.value;
-          } else if (currentDiscount.type === "fixed_amount") {
-            discountAmount = currentDiscount.value;
-          } else if (currentDiscount.type === "buy_x_min") {
-            if (totalQty >= currentDiscount.min_qty) {
-              discountAmount = subtotal * currentDiscount.value;
-            }
-          }
-          
-          // 确保折扣不大于总价
-          discountAmount = Math.min(discountAmount, subtotal);
-          currentDiscount.amount = discountAmount;
-    
-          // --- UI 更新 ---
-          const currency = currentCart.currency;
-          document.getElementById('subtotal-val').innerText = subtotal.toFixed(2) + " " + currency;
-          
-          if (discountAmount > 0) {
-            document.getElementById('discount-row').style.display = 'flex';
-            document.getElementById('discount-val').innerText = "- " + discountAmount.toFixed(2) + " " + currency;
-            document.getElementById('discount-detail-text').innerText = "🏷️ " + currentDiscount.code;
-            
-            document.getElementById('savings-box').style.display = 'flex';
-            document.getElementById('savings-val').innerText = discountAmount.toFixed(2) + " " + currency;
-          } else {
-            document.getElementById('discount-row').style.display = 'none';
-            document.getElementById('savings-box').style.display = 'none';
-          }
-    
-          if (selectedShippingRate) {
-            document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currency;
-          }
-    
-          const finalTotal = subtotal - discountAmount + shippingPrice;
-          document.getElementById('total-val').innerText = finalTotal.toFixed(2);
-          document.getElementById('mobile-total-display').innerText = finalTotal.toFixed(2) + " " + currency;
-          
-          window.finalPayAmount = finalTotal.toFixed(2);
+      if (!currentCart) return;
+      
+      const currency = currentCart.currency;
+      let totalSavings = 0;
+      let productHtml = '';
+
+      // 1. 遍历商品，渲染行项目折扣 (Shopify 自动计算的结果)
+      currentCart.items.forEach(item => {
+        const originalLinePrice = item.original_line_price / 100;
+        const finalLinePrice = item.final_line_price / 100;
+        const itemDiscount = originalLinePrice - finalLinePrice;
+        totalSavings += itemDiscount;
+
+        // 获取该商品应用的具体折扣名称 (如果有)
+        let discountBadges = '';
+        if (item.line_level_discount_allocations && item.line_level_discount_allocations.length > 0) {
+          item.line_level_discount_allocations.forEach(disc => {
+            // 这里 disc.discount_application.title 是 Shopify 后台配置的真实名称
+            discountBadges += `
+              <div class="product-discount-badge">
+                <svg viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
+                ${disc.discount_application.title} (-${(disc.amount/100).toFixed(2)} ${currency})
+              </div>`;
+          });
         }
+
+        productHtml += `
+          <div class="product-item">
+            <div class="product-img-wrapper">
+              <div class="product-img"><img src="${item.image}"></div>
+              <div class="product-qty-badge">${item.quantity}</div>
+            </div>
+            <div class="product-info">
+              <div style="font-weight:500;">${item.product_title}</div>
+              <div class="product-variant">${item.variant_title || ''}</div>
+              ${discountBadges}
+            </div>
+            <div class="product-price">
+              ${itemDiscount > 0 ? `<span class="price-original">${originalLinePrice.toFixed(2)} ${currency}</span>` : ''}
+              <span class="price-current">${finalLinePrice.toFixed(2)} ${currency}</span>
+            </div>
+          </div>`;
+      });
+
+      document.getElementById('product-list').innerHTML = productHtml;
+
+      // 2. 渲染底部金额总计
+      const subtotal = currentCart.original_total_price / 100;
+      const shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+      
+      // 注意：currentCart.total_price 已经是 Shopify 计算过所有折扣后的最终价了
+      const finalPrice = (currentCart.total_price / 100) + shippingPrice;
+
+      document.getElementById('subtotal-val').innerText = (currentCart.total_price / 100).toFixed(2) + " " + currency;
+      
+      // TOTAL SAVINGS 展示
+      const savingsBox = document.getElementById('savings-summary-box');
+      if (totalSavings > 0) {
+        savingsBox.style.display = 'flex';
+        document.getElementById('total-savings-val').innerText = totalSavings.toFixed(2) + " " + currency;
+      } else {
+        savingsBox.style.display = 'none';
+      }
+
+      document.getElementById('total-val').innerText = finalPrice.toFixed(2);
+      document.getElementById('mobile-total-display').innerText = finalPrice.toFixed(2) + " " + currency;
+      
+      // 记录要传给中台的信息
+      window.finalPayAmount = finalPrice.toFixed(2);
+      
+      // 获取折扣标题（取第一个应用的折扣名称透传）
+      window.mainDiscountTitle = currentAppliedDiscounts.length > 0 ? currentAppliedDiscounts[0].title : "";
+      window.totalDiscountAmount = totalSavings.toFixed(2);
+    }
 
     initCountries(); loadCartData();
     ['zip', 'state', 'country'].forEach(id => document.getElementById(id).addEventListener('change', fetchShippingRates));
@@ -1093,7 +1149,15 @@
 
       btn.disabled = true;
       const payload = {
-        order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'), total_amount: window.finalPayAmount, currency: currentCart.currency, gateway_mask: gatewayVal, origin_domain: window.location.host, return_url: window.location.origin + "/pages/thank-you",
+        order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'), 
+        total_amount: window.finalPayAmount, 
+        currency: currentCart.currency, 
+        // 这里透传的是从 Shopify Cart API 拿到的真实折扣名称和金额
+        discount_code: window.mainDiscountTitle, 
+        discount_amount: window.totalDiscountAmount,
+        gateway_mask: gatewayVal, 
+        origin_domain: window.location.host, 
+        return_url: window.location.origin + "/pages/thank-you",
         discount_code: currentDiscount.code,
         discount_amount: currentDiscount.amount,
         hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", line_items: currentCart.items.map(item => ({ variant_id: item.variant_id, quantity: item.quantity, title: item.title, price: (item.price / 100).toFixed(2) })), shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [], 
