@@ -26,8 +26,6 @@
   "mask_sub": "このウィンドウを閉じないでください",
   "placeholder_discount": "クーポンコード",
   "btn_discount_apply": "適用",
-  "summary_discount":"割引" ,
-  "btn_apply_coupon":"クーポンを適用",
-  "coupon-input":"クーポンコードを入力してください",
-  "total-savings-val":"総節約額: {value}"
+  "summary_discount": "割引",
+  "summary_savings": "節約できました"
 }

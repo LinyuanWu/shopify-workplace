@@ -26,8 +26,6 @@
   "mask_sub": "請勿關閉或刷新此視窗",
   "placeholder_discount": "折扣代碼",
   "btn_discount_apply": "套用",
-  "summary_discount": "折扣" ,
-  "btn_apply_coupon": "套用優惠券",
-  "coupon-input": "請輸入優惠券代碼",
-  "total-savings-val": "總節省金額: {value}"
+  "summary_discount": "訂單折扣",
+  "summary_savings": "總計節省"
 }
