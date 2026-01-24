@@ -26,5 +26,8 @@
   "mask_sub": "이 창을 닫지 마세요",
   "placeholder_discount": "할인 코드",
   "btn_discount_apply": "적용",
-  "summary_discount": "할인"
+  "summary_discount": "할인",
+  "btn_apply_coupon": "쿠폰 적용",
+  "coupon-input": "쿠폰 코드를 입력하세요",
+  "total-savings-val": "총 절약액: {value}"
 }
