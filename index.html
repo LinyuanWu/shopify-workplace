@@ -806,9 +806,9 @@
         </div>
 
         <!-- 4. Total Savings 模块 -->
-        <div class="savings-box" id="savings-box">
-          <svg viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
-          <span>TOTAL SAVINGS  <span id="savings-val">0.00</span></span>
+        <!-- 修改后的 Total Savings 展示区域：去掉了图标 -->
+        <div class="savings-summary" id="savings-summary-box" style="display:none; margin-top:15px; font-weight:600; font-size:15px; color:#333;">
+          <span>TOTAL SAVINGS <span id="total-savings-val">0.00</span></span>
         </div>
 
         <!-- PC端：翻译按钮在摘要最下方 -->
@@ -1053,29 +1053,27 @@
       selectedShippingRate = availableShippingRates[index]; updateTotalDisplay();
     };
 
-    function updateTotalDisplay() {
+function updateTotalDisplay() {
       if (!currentCart) return;
       
       const currency = currentCart.currency;
       let totalSavings = 0;
       let productHtml = '';
 
-      // 1. 遍历商品，渲染行项目折扣 (Shopify 自动计算的结果)
+      // 遍历商品，渲染纯文字折扣标签
       currentCart.items.forEach(item => {
         const originalLinePrice = item.original_line_price / 100;
         const finalLinePrice = item.final_line_price / 100;
         const itemDiscount = originalLinePrice - finalLinePrice;
         totalSavings += itemDiscount;
 
-        // 获取该商品应用的具体折扣名称 (如果有)
         let discountBadges = '';
         if (item.line_level_discount_allocations && item.line_level_discount_allocations.length > 0) {
           item.line_level_discount_allocations.forEach(disc => {
-            // 这里 disc.discount_application.title 是 Shopify 后台配置的真实名称
+            // 去掉了 SVG 图标，改用简单的标签样式
             discountBadges += `
-              <div class="product-discount-badge">
-                <svg viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
-                ${disc.discount_application.title} (-${(disc.amount/100).toFixed(2)} ${currency})
+              <div class="product-discount-badge" style="font-size:12px; color:#717171; margin-top:5px; font-weight:500;">
+                [${disc.discount_application.title}] -${(disc.amount/100).toFixed(2)} ${currency}
               </div>`;
           });
         }
@@ -1092,28 +1090,25 @@
               ${discountBadges}
             </div>
             <div class="product-price">
-              ${itemDiscount > 0 ? `<span class="price-original">${originalLinePrice.toFixed(2)} ${currency}</span>` : ''}
-              <span class="price-current">${finalLinePrice.toFixed(2)} ${currency}</span>
+              ${itemDiscount > 0 ? `<span class="price-original" style="text-decoration:line-through; color:#717171; font-size:12px; margin-right:5px;">${originalLinePrice.toFixed(2)} ${currency}</span>` : ''}
+              <span class="price-current" style="color:#333; font-weight:600;">${finalLinePrice.toFixed(2)} ${currency}</span>
             </div>
           </div>`;
       });
 
       document.getElementById('product-list').innerHTML = productHtml;
 
-      // 2. 渲染底部金额总计
-      const subtotal = currentCart.original_total_price / 100;
+      // 更新金额和 TOTAL SAVINGS
+      const totalDiscount = (currentCart.total_discount / 100) || totalSavings;
       const shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-      
-      // 注意：currentCart.total_price 已经是 Shopify 计算过所有折扣后的最终价了
       const finalPrice = (currentCart.total_price / 100) + shippingPrice;
 
       document.getElementById('subtotal-val').innerText = (currentCart.total_price / 100).toFixed(2) + " " + currency;
       
-      // TOTAL SAVINGS 展示
       const savingsBox = document.getElementById('savings-summary-box');
-      if (totalSavings > 0) {
-        savingsBox.style.display = 'flex';
-        document.getElementById('total-savings-val').innerText = totalSavings.toFixed(2) + " " + currency;
+      if (totalDiscount > 0) {
+        savingsBox.style.display = 'block'; // 纯文字显示
+        document.getElementById('total-savings-val').innerText = totalDiscount.toFixed(2) + " " + currency;
       } else {
         savingsBox.style.display = 'none';
       }
@@ -1121,12 +1116,9 @@
       document.getElementById('total-val').innerText = finalPrice.toFixed(2);
       document.getElementById('mobile-total-display').innerText = finalPrice.toFixed(2) + " " + currency;
       
-      // 记录要传给中台的信息
       window.finalPayAmount = finalPrice.toFixed(2);
-      
-      // 获取折扣标题（取第一个应用的折扣名称透传）
-      window.mainDiscountTitle = currentAppliedDiscounts.length > 0 ? currentAppliedDiscounts[0].title : "";
-      window.totalDiscountAmount = totalSavings.toFixed(2);
+      window.mainDiscountTitle = currentCart.cart_level_discount_applications && currentCart.cart_level_discount_applications.length > 0 ? currentCart.cart_level_discount_applications[0].title : "";
+      window.totalDiscountAmount = totalDiscount.toFixed(2);
     }
 
     initCountries(); loadCartData();
